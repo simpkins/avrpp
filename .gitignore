@@ -1,0 +1,8 @@
+# Build output
+/build
+# SCons build data
+/.sconsign*
+
+# Compiled python files
+*.pyc
+*.pyo

@@ -1,0 +1,53 @@
+This file contains a list of the SETUP calls received on device
+initialization, with Windows and Linux hosts.  This was obtained by
+simply logging the calls received.
+
+The format of each line is:
+
+  S <bmRequestType> <bRequest> <wValue> <wIndex>
+
+Windows:
+S 80 06 0100 0000  # get device descriptor
+S 00 05 0007 0000  # set address
+S 80 06 0100 0000  # get device descriptor
+S 80 06 0200 0000  # get config descriptor
+S 80 06 0303 0409  # get serial number
+S 80 06 0300 0000  # get language IDs
+S 80 06 0302 0409  # get product name
+S 80 06 0100 0000  # get device descriptor
+S 80 06 0200 0000  # get config descriptor
+S 80 06 0200 0000  # get config descriptor
+S 00 09 0001 0000  # set config to 1
+S 80 06 0302 0409  # get product name
+S 80 06 0302 0409  # get product name
+S 80 06 0302 0409  # get product name
+S 80 06 0302 0409  # get product name
+S 21 0a 0000 0000  # HID set idle, interface 0, value=0
+S 81 06 2200 0000  # get HID report descriptor, interface 0
+S 21 0a 0000 0001  # HID set idle, interface 1, value=0
+S 81 06 2200 0001  # get HID report descriptor, interface 1
+S 80 06 0302 0409  # get product name
+S 80 06 0302 0409  # get product name
+S 21 09 0200 0000  # HID set report (setting keyboard LEDs)
+
+Linux:
+S 80 06 0100 0000  # get device descriptor
+S 00 05 000d 0000  # set address
+S 80 06 0100 0000  # get device descriptor
+S 80 06 0600 0000  # get device qualifier descriptor
+S 80 06 0600 0000  # get device qualifier descriptor
+S 80 06 0600 0000  # get device qualifier descriptor
+S 80 06 0200 0000  # get config descriptor
+S 80 06 0200 0000  # get config descriptor
+S 80 06 0300 0000  # get language IDs
+S 80 06 0302 0409  # get product name
+S 80 06 0301 0409  # get manufacturer name
+S 80 06 0303 0409  # get serial number
+S 00 09 0001 0000  # set config to 1
+S 80 06 0303 0409  # get serial number
+S 21 0a 0000 0000  # HID set idle, interface 0, value=0
+S 81 06 2200 0000  # get HID report descriptor, interface 0
+S 21 09 0200 0000  # HID set report (setting keyboard LEDs)
+S 80 06 0303 0409  # get serial number
+S 21 0a 0000 0001  # HID set idle, interface 1, value=0
+S 81 06 2200 0001  # get HID report descriptor, interface 1

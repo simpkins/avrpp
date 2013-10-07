@@ -1,0 +1,78 @@
+Import('AVR_ENV')
+env = AVR_ENV
+
+env.AvrLibrary(
+    'util',
+    source=[
+        'util.cpp',
+        'pjrc/teensy.cpp',
+    ],
+    headers=[
+        'atomic.h',
+        'avr_registers.h',
+        'pin.h',
+        'progmem.h',
+        'util.h',
+        'pjrc/teensy.h',
+    ]
+)
+
+env.AvrLibrary(
+    'log',
+    source=['log.cpp'],
+    headers=['log.h'],
+    deps=['util'],
+)
+
+env.AvrLibrary(
+    'usb',
+    source=[
+        'usb.cpp',
+        'usb_descriptors.cpp',
+    ],
+    headers=[
+        'usb.h',
+        'usb_descriptors.h',
+        'usb_hid.h',
+        'usb_hid_keyboard.h',
+    ],
+    deps = [
+        'log',
+        'util',
+    ],
+)
+
+env.AvrLibrary(
+    'usb_dbg',
+    source=['dbg_endpoint.cpp'],
+    headers=['dbg_endpoint.h'],
+    deps=['usb'],
+)
+
+env.AvrLibrary(
+    'usb_kbd',
+    source=['kbd_endpoint.cpp'],
+    headers=['kbd_endpoint.h'],
+    deps=['usb'],
+)
+
+env.AvrLibrary(
+    'kbd',
+    source=['keyboard.cpp'],
+    headers=['keyboard.h'],
+    deps=['log', 'util'],
+)
+
+env.AvrLibrary(
+    'i2c',
+    source=[],
+    headers=[
+        'i2c.h',
+        'i2c-defs.h',
+    ],
+    deps=['log', 'util'],
+)
+
+SConscript('eeprom_ctl/SConscript')
+SConscript('kbd_v1/SConscript')
+SConscript('kbd_v2/SConscript')

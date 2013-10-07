@@ -1,0 +1,18 @@
+Import('AVR_ENV')
+env = AVR_ENV.Clone()
+
+env.EmitDescriptors('usb_config', 'gen_descriptors.py')
+
+kbd_srcs = [
+    'main.cpp',
+    'keyboard_v1.cpp',
+    'usb_config.cpp',
+    '../libkbd.a',
+    '../liblog.a',
+    '../libusb.a',
+    '../libusb_dbg.a',
+    '../libusb_kbd.a',
+    '../libutil.a',
+]
+env.AvrHex(target='kbd_v1.hex', source=kbd_srcs)
+

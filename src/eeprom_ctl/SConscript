@@ -1,0 +1,14 @@
+Import('AVR_ENV')
+env = AVR_ENV.Clone()
+
+env.EmitDescriptors('usb_config', 'gen_descriptors.py')
+
+srcs = [
+    'eeprom_ctl.cpp',
+    'usb_config.cpp',
+    '../liblog.a',
+    '../libusb.a',
+    '../libusb_dbg.a',
+    '../libutil.a',
+]
+env.AvrHex(target='eeprom_ctl.hex', source=srcs)
