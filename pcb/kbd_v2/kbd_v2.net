@@ -1,0 +1,186 @@
+# EESchema Netlist Version 1.1 created  Wed 04 Sep 2013 02:31:08 AM PDT
+(
+ ( /5226D0E4 LED-3MM D1 LED
+  ( 1 N-000001 )
+  ( 2 N-000057 )
+ )
+ ( /5226D0ED LED-3MM D2 LED
+  ( 1 N-000058 )
+  ( 2 N-000023 )
+ )
+ ( /5226D0F7 LED-3MM D3 LED
+  ( 1 N-000003 )
+  ( 2 N-000002 )
+ )
+ ( /5226D0FB LED-3MM D4 LED
+  ( 1 N-000059 )
+  ( 2 N-000046 )
+ )
+ ( /5226D100 LED-3MM D5 LED
+  ( 1 N-000004 )
+  ( 2 N-000042 )
+ )
+ ( /5226D0A0 PIN_ARRAY_20X2 P1 CONN_20X2
+  ( 1 /Row1 )
+  ( 2 /Row2 )
+  ( 3 /Row3 )
+  ( 4 /Row4 )
+  ( 5 /Row5 )
+  ( 6 /Row6 )
+  ( 7 /Row7 )
+  ( 8 /Row8 )
+  ( 9 /Row9 )
+  ( 10 /Row10 )
+  ( 11 /Row11 )
+  ( 12 /Row12 )
+  ( 13 /Row13 )
+  ( 14 /Row14 )
+  ( 15 /Row15 )
+  ( 16 /Row16 )
+  ( 17 /Row17 )
+  ( 18 /Row18 )
+  ( 19 ? )
+  ( 20 ? )
+  ( 21 /Col2 )
+  ( 22 /Col1 )
+  ( 23 /Col4 )
+  ( 24 /Col3 )
+  ( 25 /Col6 )
+  ( 26 /Col5 )
+  ( 27 /Col8 )
+  ( 28 /Col7 )
+  ( 29 ? )
+  ( 30 ? )
+  ( 31 ? )
+  ( 32 ? )
+  ( 33 ? )
+  ( 34 ? )
+  ( 35 ? )
+  ( 36 ? )
+  ( 37 ? )
+  ( 38 ? )
+  ( 39 ? )
+  ( 40 ? )
+ )
+ ( /5226D7DF SIL-6 R1 RES_ARRX5B
+  ( 1 /Vcc )
+  ( 2 N-000001 )
+  ( 3 N-000058 )
+  ( 4 N-000003 )
+  ( 5 N-000059 )
+  ( 6 N-000004 )
+ )
+ ( /5226D23A SW_DPST SW1 SW_PUSH
+  ( 1 /RST )
+  ( 2 /GND )
+ )
+ ( /5226DAF2 DIP4 SW2 DIP_SW2
+  ( 1 /GND )
+  ( 2 /Dip1 )
+  ( 3 /GND )
+  ( 4 /Dip2 )
+ )
+ ( /5226D08F Teensy2pp T1 TEENSY2PP
+  ( 1 /GND )
+  ( 2 /Col8 )
+  ( 3 /Row15 )
+  ( 4 /Row13 )
+  ( 5 /Row11 )
+  ( 6 /Row9 )
+  ( 7 /Row7 )
+  ( 8 /Row5 )
+  ( 9 /Row3 )
+  ( 10 /Row1 )
+  ( 11 ? )
+  ( 12 ? )
+  ( 13 N-000057 )
+  ( 14 N-000023 )
+  ( 15 N-000002 )
+  ( 16 N-000046 )
+  ( 17 N-000042 )
+  ( 18 ? )
+  ( 19 /Dip1 )
+  ( 20 /Dip2 )
+  ( 21 /Row2 )
+  ( 22 /Row4 )
+  ( 23 /Row6 )
+  ( 24 /Row8 )
+  ( 25 /Row10 )
+  ( 26 /Row12 )
+  ( 27 /Row14 )
+  ( 28 /Row16 )
+  ( 29 ? )
+  ( 30 ? )
+  ( 31 /Row18 )
+  ( 32 /Row17 )
+  ( 33 /Col1 )
+  ( 34 /Col2 )
+  ( 35 /Col3 )
+  ( 36 /Col4 )
+  ( 37 /Col5 )
+  ( 38 /Col6 )
+  ( 39 /Col7 )
+  ( 40 /Vcc )
+  ( 41 ? )
+  ( 42 ? )
+  ( 43 ? )
+  ( 44 ? )
+  ( 45 ? )
+  ( 46 ? )
+  ( 47 ? )
+  ( 48 ? )
+  ( 49 ? )
+  ( 50 ? )
+  ( 51 ? )
+  ( 52 /RST )
+ )
+)
+*
+{ Allowed footprints by component:
+$component D1
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D2
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D3
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D4
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$component D5
+ LED-3MM
+ LED-5MM
+ LED-10MM
+ LED-0603
+ LED-0805
+ LED-1206
+ LEDV
+$endlist
+$endfootprintlist
+}

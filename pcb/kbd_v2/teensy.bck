@@ -1,0 +1,8 @@
+EESchema-DOCLIB  Version 2.0  Date: Wed 04 Sep 2013 12:40:21 AM PDT
+#
+$CMP TEENSY2PP
+D Teensy 2.0++
+K teensy
+$ENDCMP
+#
+#End Doc Library
