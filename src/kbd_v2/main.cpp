@@ -48,6 +48,8 @@ void wait_for_usb_init(UsbController *usb) {
 class LedCallback : public KeyboardIface::LedCallback {
   public:
     virtual void updateLeds(uint8_t led_value) {
+        _leds = led_value;
+
         enum : uint8_t{
             PIN_NUM_LOCK = 0x01,
             PIN_CAPS_LOCK = 0x02,
@@ -71,6 +73,14 @@ class LedCallback : public KeyboardIface::LedCallback {
         }
         PORTC = new_pins;
     }
+
+    void refresh() {
+        AtomicGuard ag;
+        updateLeds(_leds);
+    }
+
+  private:
+    uint8_t _leds{0};
 };
 
 class KeyboardCallback : public Keyboard::Callback {
@@ -120,6 +130,10 @@ int main() {
     sei();
     // Wait for USB configuration with the host to complete
     wait_for_usb_init(usb);
+
+    // wait_for_usb_init() modifies the LEDs, so reset them back
+    // to the desired state.
+    led_callback.refresh();
 
     FLOG(1, "Keyboard initialized\n");
     kbd.loop();
