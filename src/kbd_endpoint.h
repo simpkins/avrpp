@@ -4,10 +4,6 @@
 #include "usb.h"
 #include <stdint.h>
 
-// The USB HID spec defines the protocol for boot keyboards,
-// and only supports up to 6 simultaneous keys being pressed at once.
-enum : uint8_t { MAX_KEYS = 6 };
-
 class KeyboardEndpoint : public UsbEndpoint {
   public:
     explicit KeyboardEndpoint(uint8_t number) : UsbEndpoint(number) {}
@@ -17,8 +13,13 @@ class KeyboardEndpoint : public UsbEndpoint {
 
 class KeyboardIface : public UsbInterface {
   public:
-    // The HID specification for boot keyboards defines the report size.
-    enum : uint8_t { REPORT_SIZE = 8 };
+    enum : uint8_t {
+        // The HID specification for boot keyboards defines the report size.
+        REPORT_SIZE = 8,
+        // The USB HID spec defines the protocol for boot keyboards,
+        // and only supports up to 6 simultaneous keys being pressed at once.
+        MAX_KEYS = 6,
+    };
 
     class LedCallback {
       public:

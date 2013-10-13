@@ -102,9 +102,7 @@ KeyboardV2::prepareLoop() {
     DDRE = 0x00;
     PORTE = 0xc0;
 
-    _numCols = 8;
-    _keyTable = default_key_table;
-    _modifierTable = default_modifier_table;
+    init(8, 18, default_key_table, default_modifier_table);
 }
 
 void

@@ -88,7 +88,12 @@ class KeyboardCallback : public Keyboard::Callback {
     KeyboardCallback(KeyboardIface *iface) : _interface(iface) {}
 
     virtual void onChange(Keyboard* kbd) override {
-        _interface->update(kbd->getPressedKeys(), kbd->getModifierMask());
+        uint8_t keys_len = KeyboardIface::MAX_KEYS;
+        uint8_t pressed_keys[KeyboardIface::MAX_KEYS]{0};
+        uint8_t modifier_mask{0};
+
+        kbd->getState(&modifier_mask, pressed_keys, &keys_len);
+        _interface->update(pressed_keys, modifier_mask);
     }
 
   private:
