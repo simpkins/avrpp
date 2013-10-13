@@ -28,8 +28,8 @@ Keyboard::prepareLoop() {
 void
 Keyboard::init(uint8_t num_cols,
                uint8_t num_rows,
-               const uint8_t* key_table,
-               const uint8_t* mod_table) {
+               const pgm_ptr<uint8_t> &key_table,
+               const pgm_ptr<uint8_t> &mod_table) {
     _numCols = num_cols;
     _numRows = num_rows;
     _keyTable = key_table;
@@ -166,7 +166,7 @@ Keyboard::clearIf(uint8_t col, uint8_t row,
     // This key may have been detected due to ghosting.
     // Don't report it as down.
     FLOG(2, "jamming (%d, %d) code=%d\n",
-         col, row, pgm_read_byte(_keyTable + idx));
+         col, row, *(_keyTable + idx));
     _reportedKeys[idx] = 0;
 }
 
@@ -182,10 +182,10 @@ Keyboard::getState(uint8_t *modifiers,
             auto idx = getIndex(col, row);
             if (_reportedKeys[idx]) {
                 if (pressed_idx < *keys_len) {
-                    keys[pressed_idx] = pgm_read_byte(_keyTable + idx);
+                    keys[pressed_idx] = _keyTable[idx];
                     ++pressed_idx;
                 }
-                uint8_t modifier = pgm_read_byte(_modifierTable + idx);
+                uint8_t modifier = _modifierTable[idx];
                 *modifiers |= modifier;
             }
         }

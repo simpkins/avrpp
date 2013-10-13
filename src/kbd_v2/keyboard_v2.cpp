@@ -102,7 +102,7 @@ KeyboardV2::prepareLoop() {
     DDRE = 0x00;
     PORTE = 0xc0;
 
-    init(8, 18, default_key_table, default_modifier_table);
+    init(8, 18, pgm_cast(default_key_table), pgm_cast(default_modifier_table));
 }
 
 void

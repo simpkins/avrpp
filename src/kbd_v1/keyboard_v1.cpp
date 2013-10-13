@@ -184,7 +184,8 @@ KeyboardV1::prepareLoop() {
     DDRC = 0x00;
     PORTC = 0xff;
 
-    init(16, 8, simpkins_key_table, simpkins_modifier_table);
+    init(16, 8,
+         pgm_cast(simpkins_key_table), pgm_cast(simpkins_modifier_table));
     // TODO: This keyboard has diodes on most of the modifier keys.
     // Update the _diodes map with the diode locations.
 }

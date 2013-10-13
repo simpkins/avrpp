@@ -1,6 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
+#include "progmem.h"
 #include <stdint.h>
 
 class Keyboard {
@@ -49,8 +50,8 @@ class Keyboard {
 
     void init(uint8_t num_cols,
               uint8_t num_rows,
-              const uint8_t* key_table,
-              const uint8_t* mod_table);
+              const pgm_ptr<uint8_t> &key_table,
+              const pgm_ptr<uint8_t> &mod_table);
 
   private:
     virtual void scanImpl() = 0;
@@ -69,8 +70,8 @@ class Keyboard {
     uint8_t _numCols{0};
     uint8_t _numRows{0};
 
-    const uint8_t* _keyTable{nullptr};
-    const uint8_t* _modifierTable{nullptr};
+    pgm_ptr<uint8_t> _keyTable{nullptr};
+    pgm_ptr<uint8_t> _modifierTable{nullptr};
 
     /*
      * The keys that we detected were pressed

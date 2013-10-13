@@ -42,6 +42,11 @@ static inline int32_t _progmem_get(const int32_t* ptr) {
 template<typename T>
 struct pgm_ptr {
     explicit pgm_ptr(const T* p) : _value(p) {}
+
+    void reset(const T* p) {
+        _value = p;
+    }
+
     pgm_ptr& operator++() {
         ++_value;
         return *this;
@@ -58,6 +63,10 @@ struct pgm_ptr {
 
     const T* value() const {
         return _value;
+    }
+
+    T operator[](size_t idx) const {
+        return _progmem_get(_value + idx);
     }
 
     pgm_ptr<T> operator+(size_t idx) const {
