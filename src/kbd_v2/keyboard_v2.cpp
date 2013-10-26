@@ -16,7 +16,7 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEY_PERIOD, KEY_QUOTE, KEY_RIGHT_SHIFT, KEY_NONE,
     // Row 2
     KEY_NONE, KEY_Y, KEY_U, KEY_I,
-    KEY_O, KEY_P, KEY_RIGHT_GUI, KEY_NONE,
+    KEY_O, KEY_P, KEY_VOLUME_DOWN, KEY_NONE,
     // Row 3
     KEY_NONE, KEY_F7, KEY_F8, KEY_F9,
     KEY_F10, KEY_F11, KEY_F12, KEY_NONE,
@@ -25,7 +25,7 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEYPAD_3, KEYPAD_PLUS, KEY_RIGHT_ALT, KEY_NONE,
     // Row 5
     KEY_CAPS_LOCK, KEY_NUM_LOCK, KEYPAD_7, KEYPAD_8,
-    KEYPAD_9, KEYPAD_ASTERIX, KEY_F14, KEY_NONE,
+    KEYPAD_9, KEYPAD_ASTERIX, KEY_SCROLL_LOCK, KEY_NONE,
     // Row 6
     KEY_NONE, KEY_LEFT_CTRL, KEY_A, KEY_S,
     KEY_D, KEY_F, KEY_G, KEY_ENTER,
@@ -51,22 +51,22 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEY_NONE, KEY_LEFT_SHIFT, KEY_Z, KEY_X,
     KEY_C, KEY_V, KEY_B, KEY_ESC,
     // Row 14
-    KEY_NONE, KEY_RIGHT_ALT, KEY_Q, KEY_W,
+    KEY_NONE, KEY_VOLUME_UP, KEY_Q, KEY_W,
     KEY_E, KEY_R, KEY_T, KEY_NONE,
     // Row 15
     KEY_NONE, KEY_F1, KEY_F2, KEY_F3,
     KEY_F4, KEY_F5, KEY_F6, KEY_NONE,
     // Row 16
-    KEY_ENTER, KEY_NONE, KEY_NONE, KEY_VOLUME_UP,
-    KEY_NONE, KEY_NONE, KEY_NONE, KEY_VOLUME_DOWN,
+    KEY_ENTER, KEY_NONE, KEY_NONE, KEY_LEFT_ALT,
+    KEY_NONE, KEY_NONE, KEY_NONE, KEY_RIGHT_ALT,
     // Row 17
-    KEY_LEFT_ALT, KEY_NONE, KEY_NONE, KEY_NONE,
+    KEY_RIGHT_GUI, KEY_NONE, KEY_NONE, KEY_NONE,
     KEY_MUTE, KEY_NONE, KEY_NONE, KEY_LEFT,
 };
 static const uint8_t PROGMEM default_modifier_table[18 * 8] = {
     0, 0, 0, 0, 0, 0, 0, MOD_LEFT_GUI,  // Row 0
     0, 0, 0, 0, 0, 0, MOD_RIGHT_SHIFT, 0,  // Row 1
-    0, 0, 0, 0, 0, 0, MOD_RIGHT_GUI, 0,  // Row 2
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 2
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 3
     0, 0, 0, 0, 0, 0, MOD_RIGHT_ALT, 0,  // Row 4
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 5
@@ -78,10 +78,10 @@ static const uint8_t PROGMEM default_modifier_table[18 * 8] = {
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 11
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 12
     0, MOD_LEFT_SHIFT, 0, 0, 0, 0, 0, 0,  // Row 13
-    0, MOD_RIGHT_ALT, 0, 0, 0, 0, 0, 0,  // Row 14
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 14
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 15
-    0, 0, 0, 0, 0, 0, 0, 0,  // Row 16
-    MOD_LEFT_ALT, 0, 0, 0, 0, 0, 0, 0,  // Row 17
+    0, 0, 0, MOD_LEFT_ALT, 0, 0, 0, MOD_RIGHT_ALT,  // Row 16
+    MOD_RIGHT_GUI, 0, 0, 0, 0, 0, 0, 0,  // Row 17
 };
 
 void
