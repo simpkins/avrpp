@@ -105,8 +105,10 @@ int main() {
     set_cpu_prescale();
 
     KeyboardIface kbd_if(KEYBOARD_INTERFACE, KEYBOARD_ENDPOINT);
+#if USB_DEBUG
     DebugIface dbg_if(DEBUG_INTERFACE, DEBUG_ENDPOINT, 4096, DEBUG_SIZE);
     set_log_putchar(DebugIface::putcharC, &dbg_if);
+#endif
     FLOG(2, "Booting\n");
 
     DDRC = 0x3f;
@@ -128,7 +130,9 @@ int main() {
     LedCallback led_callback;
     kbd_if.setLedCallback(&led_callback);
     usb->addInterface(&kbd_if);
+#if USB_DEBUG
     usb->addInterface(&dbg_if);
+#endif
     UsbDescriptorMap descriptors(pgm_cast(usb_descriptors));
     usb->init(ENDPOINT0_SIZE, &descriptors);
     // Enable interrupts
