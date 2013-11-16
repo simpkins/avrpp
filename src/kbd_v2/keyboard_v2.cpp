@@ -1,11 +1,15 @@
 // Copyright (c) 2013, Adam Simpkins
 #include "keyboard_v2.h"
 
+#include <avrpp/log.h>
 #include <avrpp/progmem.h>
 #include <avrpp/usb_hid_keyboard.h>
 #include <avrpp/util.h>
 
 #include <util/delay.h>
+
+F_LOG_LEVEL(1);
+#include <avrpp/kbd/KbdDiodeImpl-defs.h>
 
 static const uint8_t PROGMEM default_key_table[18 * 8] = {
     // Row 0
@@ -13,7 +17,7 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEY_LEFT_BRACE, KEY_MINUS, KEY_BACKSPACE, KEY_LEFT_GUI,
     // Row 1
     KEY_RIGHT, KEY_N, KEY_M, KEY_COMMA,
-    KEY_PERIOD, KEY_QUOTE, KEY_RIGHT_SHIFT, KEY_NONE,
+    KEY_PERIOD, KEY_QUOTE, KEY_NONE, KEY_NONE,
     // Row 2
     KEY_NONE, KEY_Y, KEY_U, KEY_I,
     KEY_O, KEY_P, KEY_VOLUME_DOWN, KEY_NONE,
@@ -48,7 +52,7 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEY_F13, KEYPAD_EQUAL, KEYPAD_4, KEYPAD_5,
     KEYPAD_6, KEYPAD_SLASH, KEY_F15, KEY_NONE,
     // Row 13
-    KEY_NONE, KEY_LEFT_SHIFT, KEY_Z, KEY_X,
+    KEY_NONE, KEY_NONE, KEY_Z, KEY_X,
     KEY_C, KEY_V, KEY_B, KEY_ESC,
     // Row 14
     KEY_NONE, KEY_VOLUME_UP, KEY_Q, KEY_W,
@@ -60,12 +64,12 @@ static const uint8_t PROGMEM default_key_table[18 * 8] = {
     KEY_ENTER, KEY_NONE, KEY_NONE, KEY_LEFT_ALT,
     KEY_NONE, KEY_NONE, KEY_NONE, KEY_RIGHT_ALT,
     // Row 17
-    KEY_RIGHT_GUI, KEY_NONE, KEY_NONE, KEY_NONE,
-    KEY_MUTE, KEY_NONE, KEY_NONE, KEY_LEFT,
+    KEY_RIGHT_GUI, KEY_LEFT_SHIFT, KEY_NONE, KEY_NONE,
+    KEY_MUTE, KEY_NONE, KEY_RIGHT_SHIFT, KEY_LEFT,
 };
 static const uint8_t PROGMEM default_modifier_table[18 * 8] = {
     0, 0, 0, 0, 0, 0, 0, MOD_LEFT_GUI,  // Row 0
-    0, 0, 0, 0, 0, 0, MOD_RIGHT_SHIFT, 0,  // Row 1
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 1
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 2
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 3
     0, 0, 0, 0, 0, 0, MOD_RIGHT_ALT, 0,  // Row 4
@@ -77,12 +81,21 @@ static const uint8_t PROGMEM default_modifier_table[18 * 8] = {
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 10
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 11
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 12
-    0, MOD_LEFT_SHIFT, 0, 0, 0, 0, 0, 0,  // Row 13
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 13
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 14
     0, 0, 0, 0, 0, 0, 0, 0,  // Row 15
     0, 0, 0, MOD_LEFT_ALT, 0, 0, 0, MOD_RIGHT_ALT,  // Row 16
-    MOD_RIGHT_GUI, 0, 0, 0, 0, 0, 0, 0,  // Row 17
+    MOD_RIGHT_GUI, MOD_LEFT_SHIFT, 0, 0, 0, 0, MOD_RIGHT_SHIFT, 0,  // Row 17
 };
+
+KeyboardV2::KeyboardV2() {
+    _keyTable = pgm_cast(default_key_table);
+    _modifierTable = pgm_cast(default_modifier_table);
+
+    // There are diodes installed on the left and right shift keys.
+    _diodes.set(getIndex(1, 17));
+    _diodes.set(getIndex(6, 17));
+}
 
 void
 KeyboardV2::prepare() {
@@ -97,53 +110,60 @@ KeyboardV2::prepare() {
     PORTF = 0xff;
     DDRE = 0x00;
     PORTE = 0xc0;
-
-    init(8, 18, pgm_cast(default_key_table), pgm_cast(default_modifier_table));
 }
 
 void
-KeyboardV2::scanImpl() {
-    for (uint8_t col = 0; col < 8; ++col) {
-        // Turn the specified column pin into an output pin, and bring it low.
-        //
-        // It is important that the other column pins are configured as inputs.
-        // If multiple keys are pressed down, they may create a circuit
-        // connecting to other column pins as well.  We don't want an output
-        // voltage on these pins to affect our reading on the column currently
-        // being scanned.
-        DDRB = 0x01 << col;
-        PORTB = 0xff & ~(0x01 << col);
+KeyboardV2::prepareColScan(uint8_t col) {
+    // Set the specified column to low output, with all other
+    // columns as pull-up input.
+    //
+    // We assume that all rows are already configured as pull-up inputs.
+    // (After each call to prepareRowScan(), finishRowScan() is always called
+    // before subsequent prepareColScan() calls.)
+    DDRB = 0x01 << col;
+    PORTB = 0xff & ~(0x01 << col);
+}
 
-        // We need a very brief delay here to allow the signal
-        // to propagate to the input pins.
-        _delay_us(5);
-
-        // Read which row pins are active
-        uint8_t d = ~PIND;
-        uint8_t f = ~PINF;
-        uint8_t e = ~PINE;
-
-        if (UNLIKELY(d)) {
-            for (uint8_t n = 0; n < 8; ++n) {
-                if (d & (0x1 << n)) {
-                    keyPressed(col, n);
-                }
-            }
-        }
-        if (UNLIKELY(f)) {
-            for (uint8_t n = 0; n < 8; ++n) {
-                if (f & (0x1 << n)) {
-                    keyPressed(col, n + 8);
-                }
-            }
-        }
-        if (e & 0x40) {
-            keyPressed(col, 16);
-        }
-        if (e & 0x80) {
-            keyPressed(col, 17);
-        }
-    }
+void
+KeyboardV2::prepareRowScan(uint8_t row) {
+    // Set the specified row to low output, with all other rows and columns
+    // as pull-up input.
     DDRB = 0x00;
     PORTB = 0xff;
+    if (row < 8) {
+        uint8_t bit = row;
+        DDRD = 0x01 << bit;
+        PORTD = 0xff & ~(0x01 << bit);
+    } else if (row < 16) {
+        uint8_t bit = row - 8;
+        DDRF = 0x01 << bit;
+        PORTF = 0xff & ~(0x01 << bit);
+    } else {
+        uint8_t bit = row - 10;
+        DDRE = 0x01 << bit;
+        PORTE = 0xc0 & ~(0x01 << bit);
+    }
+}
+
+void
+KeyboardV2::finishRowScan() {
+    // Reset all rows to pull-up input.
+    DDRD = 0x00;
+    PORTD = 0xff;
+    DDRF = 0x00;
+    PORTF = 0xff;
+    DDRE = 0x00;
+    PORTE = 0xc0;
+}
+
+void
+KeyboardV2::readRows(RowMap *rows) {
+    rows->bytes[0] = ~PIND;
+    rows->bytes[1] = ~PINF;
+    rows->bytes[2] = (static_cast<uint8_t>(~PINE) >> 6);
+}
+
+void
+KeyboardV2::readCols(ColMap *cols) {
+    cols->bytes[0] = ~PINB;
 }

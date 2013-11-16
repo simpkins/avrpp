@@ -1,7 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
-#include "progmem.h"
+#include <avrpp/progmem.h>
 #include <stdint.h>
 
 class Keyboard {

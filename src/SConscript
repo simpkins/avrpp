@@ -58,13 +58,6 @@ env.AvrLibrary(
 )
 
 env.AvrLibrary(
-    'kbd',
-    source=['keyboard.cpp'],
-    headers=['keyboard.h'],
-    deps=['log', 'util'],
-)
-
-env.AvrLibrary(
     'i2c',
     source=[],
     headers=[
@@ -74,6 +67,7 @@ env.AvrLibrary(
     deps=['log', 'util'],
 )
 
+SConscript('kbd/SConscript')
 SConscript('eeprom_ctl/SConscript')
 SConscript('kbd_v1/SConscript')
 SConscript('kbd_v2/SConscript')

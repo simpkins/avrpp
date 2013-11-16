@@ -41,6 +41,7 @@ static inline int32_t _progmem_get(const int32_t* ptr) {
  */
 template<typename T>
 struct pgm_ptr {
+    explicit pgm_ptr() : _value(nullptr) {}
     explicit pgm_ptr(const T* p) : _value(p) {}
 
     void reset(const T* p) {
@@ -74,7 +75,7 @@ struct pgm_ptr {
     }
 
   private:
-    const T* _value;
+    const T* _value{nullptr};
 };
 
 template<typename T>

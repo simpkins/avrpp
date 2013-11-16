@@ -7,7 +7,7 @@ kbd_srcs = [
     'main.cpp',
     'keyboard_v1.cpp',
     'usb_config.cpp',
-    '../libkbd.a',
+    '../kbd/libkbd.a',
     '../liblog.a',
     '../libusb.a',
     '../libusb_dbg.a',

@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2013, Adam Simpkins
  */
-#include "keyboard.h"
+#include "Keyboard.h"
 
-#include "log.h"
-#include "usb.h"
-#include "usb_hid_keyboard.h"
-#include "kbd_endpoint.h"
-#include "util.h"
+#include <avrpp/log.h>
+#include <avrpp/usb.h>
+#include <avrpp/usb_hid_keyboard.h>
+#include <avrpp/kbd_endpoint.h>
+#include <avrpp/util.h>
 
 #include <avr/pgmspace.h>
 #include <util/delay.h>
