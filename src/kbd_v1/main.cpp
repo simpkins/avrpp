@@ -63,6 +63,8 @@ void wait_for_usb_init(UsbController *usb) {
 class LedCallback : public KeyboardIface::LedCallback {
   public:
     virtual void updateLeds(uint8_t led_value) {
+        _leds = led_value;
+
         enum : uint8_t{
             PIN_NUM_LOCK = 0x04,
             PIN_CAPS_LOCK = 0x08,
@@ -86,6 +88,14 @@ class LedCallback : public KeyboardIface::LedCallback {
         }
         PORTD = new_pins;
     }
+
+    void refresh() {
+        AtomicGuard ag;
+        updateLeds(_leds);
+    }
+
+  private:
+    uint8_t _leds{0};
 };
 
 class KeyboardCallback : public Keyboard::Callback {
@@ -132,7 +142,6 @@ int main() {
 
     KeyboardV1 kbd;
     KeyboardCallback kbd_callback(&kbd_if);
-    kbd.setCallback(&kbd_callback);
 
     // TODO: Apply other power saving settings as recommended by
     // the at90usb1286 manual.
@@ -155,6 +164,10 @@ int main() {
     // Wait for USB configuration with the host to complete
     wait_for_usb_init(usb);
 
+    // wait_for_usb_init() modifies the LEDs, so reset them back
+    // to the desired state.
+    led_callback.refresh();
+
     FLOG(1, "Keyboard initialized\n");
-    kbd.loop();
+    kbd.loop(&kbd_callback);
 }

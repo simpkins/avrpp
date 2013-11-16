@@ -16,20 +16,32 @@
 
 F_LOG_LEVEL(1);
 
-Keyboard::~Keyboard() {
+void
+Keyboard::loop(Callback *callback) {
+    prepare();
+
+    // Delay for 2ms between iterations to avoid detecting false key
+    // presses/releases due to key bounce.  (The Cherry MX switches in my
+    // current keyboards are rated at 5ms, but in practice 2ms seems to work
+    // fine for me.)
+    const uint8_t bounce_ms = 2;
+    while (true) {
+        if (scanKeys()) {
+            callback->onChange(this);
+        }
+        _delay_ms(bounce_ms);
+    }
+}
+
+KeyboardImpl::~KeyboardImpl() {
     free(_detectedKeys);
 }
 
 void
-Keyboard::prepareLoop() {
-  // subclasses should override prepareLoop() to perform any setup required.
-}
-
-void
-Keyboard::init(uint8_t num_cols,
-               uint8_t num_rows,
-               const pgm_ptr<uint8_t> &key_table,
-               const pgm_ptr<uint8_t> &mod_table) {
+KeyboardImpl::init(uint8_t num_cols,
+                   uint8_t num_rows,
+                   const pgm_ptr<uint8_t> &key_table,
+                   const pgm_ptr<uint8_t> &mod_table) {
     _numCols = num_cols;
     _numRows = num_rows;
     _keyTable = key_table;
@@ -61,18 +73,8 @@ Keyboard::init(uint8_t num_cols,
     _diodes = _prevKeys + num_keys;
 }
 
-void
-Keyboard::loop() {
-    prepareLoop();
-
-    while (true) {
-        scanKeys();
-        _delay_ms(2);
-    }
-}
-
-void
-Keyboard::scanKeys() {
+bool
+KeyboardImpl::scanKeys() {
     memset(_detectedKeys, 0, mapSize());
     scanImpl();
 
@@ -80,20 +82,18 @@ Keyboard::scanKeys() {
     // be ghosting rather than real key presses.
     blockKeys();
 
-    if (_callback && memcmp(_prevKeys, _reportedKeys, mapSize()) != 0) {
-        _callback->onChange(this);
-    }
+    return (memcmp(_prevKeys, _reportedKeys, mapSize()) != 0);
 }
 
 void
-Keyboard::keyPressed(uint8_t col, uint8_t row) {
+KeyboardImpl::keyPressed(uint8_t col, uint8_t row) {
     FLOG(4, "pressed: %#x x %#x\n", col, row);
     auto idx = getIndex(col, row);
     _detectedKeys[idx] = 1;
 }
 
 void
-Keyboard::blockKeys() {
+KeyboardImpl::blockKeys() {
     // Swap _prevKeys and _reportedKeys, so that _prevKeys
     // points at the reported keys from the last scan loop.
     auto *tmp = _prevKeys;
@@ -137,7 +137,7 @@ Keyboard::blockKeys() {
 }
 
 void
-Keyboard::clearRect(uint8_t c1, uint8_t r1, uint8_t c2, uint8_t r2) {
+KeyboardImpl::clearRect(uint8_t c1, uint8_t r1, uint8_t c2, uint8_t r2) {
     FLOG(3, "found rect: (%d, %d), (%d, %d)\n", c1, r1, c2, r2);
     clearIf(c1, r1, c2, r2);
     clearIf(c1, r2, c2, r1);
@@ -146,8 +146,8 @@ Keyboard::clearRect(uint8_t c1, uint8_t r1, uint8_t c2, uint8_t r2) {
 }
 
 void
-Keyboard::clearIf(uint8_t col, uint8_t row,
-                  uint8_t diode_col, uint8_t diode_row) {
+KeyboardImpl::clearIf(uint8_t col, uint8_t row,
+                      uint8_t diode_col, uint8_t diode_row) {
     auto idx = getIndex(col, row);
     if (_prevKeys[idx]) {
         // This key was previously reported as down,
@@ -171,9 +171,9 @@ Keyboard::clearIf(uint8_t col, uint8_t row,
 }
 
 void
-Keyboard::getState(uint8_t *modifiers,
-                   uint8_t *keys,
-                   uint8_t *keys_len) const {
+KeyboardImpl::getState(uint8_t *modifiers,
+                       uint8_t *keys,
+                       uint8_t *keys_len) const {
     *modifiers = 0;
 
     uint8_t pressed_idx = 0;

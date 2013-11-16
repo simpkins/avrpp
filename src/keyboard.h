@@ -8,25 +8,40 @@ class Keyboard {
   public:
     class Callback {
       public:
-        // virtual ~Callback() {}
-
+        virtual ~Callback() {}
         virtual void onChange(Keyboard* kbd) = 0;
     };
 
-    virtual ~Keyboard();
-
-    virtual void prepareLoop();
-    void scanKeys();
+    virtual ~Keyboard() {}
 
     /*
-     * loop() is a convenience method that calls prepareLoop(),
-     * and then loops calling scanKeys().
+     * prepare() should be called before the first invocation of scanKeys().
+     *
+     * This gets the keyboard ready for scanning.
      */
-    void loop();
+    virtual void prepare() = 0;
 
-    void setCallback(Callback *callback) {
-        _callback = callback;
-    }
+    /*
+     * Scan all keys.
+     *
+     * Returns true if the keys have changed since the last call to scanKeys(),
+     * or false if the keys are the same as last time.
+     *
+     * If scanKeys() returns true, call getState() to get the new keyboard
+     * state.
+     *
+     * Callers should wait for 2 to 5 milliseconds between calls to scanKeys().
+     * This avoids false key changes detected due to key bounce.
+     */
+    virtual bool scanKeys() = 0;
+
+    /*
+     * Continuously scan the keys, notifying the callback on any state change.
+     *
+     * This is a convenience method that simply loops calling scanKeys()
+     * repeatedly.
+     */
+    virtual void loop(Callback *callback);
 
     /*
      * Get the current state of the keyboard.
@@ -43,7 +58,19 @@ class Keyboard {
      *     written to the keys array.  On return, this value will be updated
      *     to indicate the number of keys actually written to the keys array.
      */
-    void getState(uint8_t *modifiers, uint8_t *keys, uint8_t *keys_len) const;
+    virtual void getState(uint8_t *modifiers,
+                          uint8_t *keys,
+                          uint8_t *keys_len) const = 0;
+};
+
+class KeyboardImpl : public Keyboard {
+  public:
+    virtual ~KeyboardImpl();
+
+    virtual bool scanKeys() override;
+    virtual void getState(uint8_t *modifiers,
+                          uint8_t *keys,
+                          uint8_t *keys_len) const override;
 
   protected:
     void keyPressed(uint8_t col, uint8_t row);

@@ -115,7 +115,6 @@ int main() {
     PORTC = 0xff;
     KeyboardV2 kbd;
     KeyboardCallback kbd_callback(&kbd_if);
-    kbd.setCallback(&kbd_callback);
 
     // TODO: Apply other power saving settings as recommended by
     // the at90usb1286 manual.
@@ -145,5 +144,5 @@ int main() {
     led_callback.refresh();
 
     FLOG(1, "Keyboard initialized\n");
-    kbd.loop();
+    kbd.loop(&kbd_callback);
 }

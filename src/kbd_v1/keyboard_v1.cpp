@@ -169,11 +169,7 @@ static const uint8_t PROGMEM simpkins_modifier_table[8 * 16] = {
 };
 
 void
-KeyboardV1::prepareLoop() {
-    // Set LEDs to output, high (which is off for my LEDs)
-    DDRD = 0xff;
-    PORTD = 0xff;
-
+KeyboardV1::prepare() {
     // Set columns to output, low
     DDRF = 0xff;
     PORTF = 0x00;

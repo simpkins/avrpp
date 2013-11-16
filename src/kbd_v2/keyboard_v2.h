@@ -3,9 +3,9 @@
 
 #include <avrpp/keyboard.h>
 
-class KeyboardV2 : public Keyboard {
+class KeyboardV2 : public KeyboardImpl {
   public:
-    virtual void prepareLoop() override;
+    virtual void prepare() override;
 
   private:
     virtual void scanImpl() override;

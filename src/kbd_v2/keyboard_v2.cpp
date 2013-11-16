@@ -85,11 +85,7 @@ static const uint8_t PROGMEM default_modifier_table[18 * 8] = {
 };
 
 void
-KeyboardV2::prepareLoop() {
-    // Set LEDs to output, high (which is off for my LEDs)
-    DDRC = 0x3f;
-    PORTC = 0xff;
-
+KeyboardV2::prepare() {
     // Set columns to output, low
     DDRB = 0xff;
     PORTB = 0x00;
