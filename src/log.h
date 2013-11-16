@@ -27,6 +27,21 @@
  */
 extern uint8_t g_log_level;
 
+/*
+ * Set the logging level for the current file.
+ *
+ * This macro should be used once at the top of each file that uses FLOG().
+ *
+ * (The log level is marked unused to avoid compiler warnings if your file
+ * doesn't actually use FLOG().  It's convenient to be able to use
+ * F_LOG_LEVEL() even if the file does not have any log statements at the
+ * moment.  During development new files may not have FLOG() statements yet,
+ * or the last FLOG() statement in a file may have been temporarily removed
+ * during refactoring.)
+ */
+#define F_LOG_LEVEL(level) \
+    static uint8_t f_log_level __attribute__((unused)) = (level);
+
 typedef bool (*LogPutcharFn)(uint8_t c, void* arg);
 
 /*

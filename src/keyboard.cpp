@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static uint8_t f_log_level = 1;
+F_LOG_LEVEL(1);
 
 Keyboard::~Keyboard() {
     free(_detectedKeys);

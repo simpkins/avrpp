@@ -15,7 +15,7 @@
 #include <util/delay.h>
 #include <string.h>
 
-static uint8_t f_log_level = 2;
+F_LOG_LEVEL(2);
 
 template<typename I2cBus>
 void run_eeprom_read(I2cBus* bus) {

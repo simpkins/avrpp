@@ -10,7 +10,7 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
-static uint8_t f_log_level = 1;
+F_LOG_LEVEL(1);
 
 UsbController UsbController::s_controller;
 

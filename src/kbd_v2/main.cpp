@@ -16,7 +16,7 @@
 #include <avr/wdt.h>
 #include <util/delay.h>
 
-static uint8_t f_log_level = 2;
+F_LOG_LEVEL(2);
 
 void wait_for_usb_init(UsbController *usb) {
     // Cycle the LEDs through a pattern while we wait

@@ -11,7 +11,7 @@
 #include <avr/interrupt.h>
 #include <string.h>
 
-static uint8_t f_log_level = 1;
+F_LOG_LEVEL(1);
 
 KeyboardIface::KeyboardIface(uint8_t iface, uint8_t endpoint)
     : UsbInterface(iface),

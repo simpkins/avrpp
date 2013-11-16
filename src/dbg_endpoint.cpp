@@ -13,7 +13,7 @@
 #include <util/delay.h>
 #include <stdlib.h>
 
-static uint8_t f_log_level = 2;
+F_LOG_LEVEL(2);
 
 enum : uint8_t { DBG_FLUSH_TIMEOUT_MS = 10 };
 
