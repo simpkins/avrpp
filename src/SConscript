@@ -10,6 +10,7 @@ env.AvrLibrary(
     headers=[
         'atomic.h',
         'avr_registers.h',
+        'bitmap.h',
         'pin.h',
         'progmem.h',
         'util.h',
