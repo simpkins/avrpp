@@ -1,7 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
-#include "usb.h"
+#include <avrpp/usb.h>
 #include <stdint.h>
 
 class KeyboardEndpoint : public UsbEndpoint {

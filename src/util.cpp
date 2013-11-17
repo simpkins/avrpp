@@ -1,6 +1,6 @@
 // Copyright (c) 2013, Adam Simpkins
-#include "avr_registers.h"
-#include "log.h"
+#include <avrpp/avr_registers.h>
+#include <avrpp/log.h>
 
 #include <avr/wdt.h>
 #include <stdlib.h>

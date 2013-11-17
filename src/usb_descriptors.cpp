@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2013, Adam Simpkins
  */
-#include "usb_descriptors.h"
+#include <avrpp/usb_descriptors.h>
 
-#include "usb.h"
+#include <avrpp/usb.h>
 
 UsbDescriptorMap::UsbDescriptorMap(pgm_ptr<UsbDescriptor> descriptors)
     : _descriptors(descriptors) {

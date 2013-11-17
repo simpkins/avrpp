@@ -1,7 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
-#include "avr_registers.h"
+#include <avrpp/avr_registers.h>
 
 #include <avr/io.h>
 #include <stdint.h>

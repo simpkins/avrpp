@@ -1,5 +1,5 @@
 // Copyright (c) 2013, Adam Simpkins
-#include "log.h"
+#include <avrpp/log.h>
 
 uint8_t g_log_level = 1;
 

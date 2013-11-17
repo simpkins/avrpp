@@ -7,8 +7,8 @@
 // are tight on program space you probably should be wary of this.
 #pragma once
 
-#include "atomic.h"
-#include "progmem.h"
+#include <avrpp/atomic.h>
+#include <avrpp/progmem.h>
 
 /*
  * If LOG_TYPE_SAFE is 1, log_msg() uses C++ variadic templates,

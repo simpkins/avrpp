@@ -1,10 +1,10 @@
 // Copyright (c) 2013, Adam Simpkins
-#include "usb.h"
+#include <avrpp/usb.h>
 
-#include "atomic.h"
-#include "avr_registers.h"
-#include "log.h"
-#include "usb_descriptors.h"
+#include <avrpp/atomic.h>
+#include <avrpp/avr_registers.h>
+#include <avrpp/log.h>
+#include <avrpp/usb_descriptors.h>
 
 #include <avr/interrupt.h>
 #include <avr/io.h>

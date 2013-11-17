@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "teensy.h"
+#include <avrpp/teensy.h>
 
 #include <avr/interrupt.h>
 #include <avr/io.h>

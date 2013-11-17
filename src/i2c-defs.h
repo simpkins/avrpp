@@ -1,7 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
-#include "i2c.h"
+#include <avrpp/i2c.h>
 
 template<typename SdaPin, typename SclPin,
          uint16_t CYCLE_US, uint16_t CLOCK_TIMEOUT>

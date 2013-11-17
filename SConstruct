@@ -31,7 +31,9 @@ def _header_install_path(env):
 def avr_library(env, name, source, headers, deps=None):
     node = env.StaticLibrary(name, source, deps=deps)
     env.Install(env['LIB_DIR'], [node])
-    env.Install(_header_install_path(env), headers)
+    for hdr in headers:
+        hdr_dir = os.path.dirname(hdr)
+        env.Install(os.path.join(_header_install_path(env), hdr_dir), hdr)
 
 
 def emit_descriptors(env, file_name, source):

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Adam Simpkins
  */
-#include "Keyboard.h"
+#include <avrpp/kbd/Keyboard.h>
 
 #include <avrpp/log.h>
 #include <avrpp/usb.h>

@@ -1,12 +1,12 @@
 // Copyright (c) 2013, Adam Simpkins
-#include "dbg_endpoint.h"
+#include <avrpp/dbg_endpoint.h>
 
-#include "atomic.h"
-#include "log.h"
-#include "usb.h"
-#include "usb_descriptors.h"
-#include "usb_hid.h"
-#include "pjrc/teensy.h"
+#include <avrpp/atomic.h>
+#include <avrpp/log.h>
+#include <avrpp/usb.h>
+#include <avrpp/usb_descriptors.h>
+#include <avrpp/usb_hid.h>
+#include <avrpp/pjrc/teensy.h>
 
 #include <avr/interrupt.h>
 #include <avr/wdt.h>

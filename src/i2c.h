@@ -1,7 +1,7 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
-#include "pin.h"
+#include <avrpp/pin.h>
 
 #include <util/delay.h>
 

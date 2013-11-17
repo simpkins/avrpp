@@ -1,12 +1,12 @@
 // Copyright (c) 2013, Adam Simpkins
-#include "kbd_endpoint.h"
+#include <avrpp/kbd_endpoint.h>
 
-#include "atomic.h"
-#include "log.h"
-#include "usb.h"
-#include "usb_descriptors.h"
-#include "usb_hid.h"
-#include "usb_hid_keyboard.h"
+#include <avrpp/atomic.h>
+#include <avrpp/log.h>
+#include <avrpp/usb.h>
+#include <avrpp/usb_descriptors.h>
+#include <avrpp/usb_hid.h>
+#include <avrpp/usb_hid_keyboard.h>
 
 #include <avr/interrupt.h>
 #include <string.h>
