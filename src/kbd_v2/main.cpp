@@ -13,7 +13,7 @@
 #include <avrpp/util.h>
 
 #include <avr/interrupt.h>
-#include <avr/wdt.h>
+#include <avr/sleep.h>
 #include <util/delay.h>
 
 F_LOG_LEVEL(2);
@@ -59,6 +59,18 @@ class LedController {
             new_pins |= PIN_SCROLL_LOCK;
         }
         PORTC = new_pins;
+    }
+
+    // Turn off all LEDs for entering suspend mode.
+    // Returns the current LED state.  This can be restored after suspending
+    // by calling restoreLEDs().
+    uint8_t suspendLEDs() {
+        uint8_t current_leds = ((~PORTC) & LED_MASK);
+        PORTC |= LED_MASK;
+        return current_leds;
+    }
+    void restoreLEDs(uint8_t value) {
+        PORTC = (PORTC & ~LED_MASK) | ~value;
     }
 
   private:
@@ -119,6 +131,19 @@ class Controller : private Keyboard::Callback,
         }
     }
 
+    void suspend() {
+        auto led_state = _leds->suspendLEDs();
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        AtomicGuard ag;
+        if (UsbController::singleton()->suspended()) {
+            sleep_enable();
+            sei();
+            sleep_cpu();
+            sleep_disable();
+        }
+        _leds->restoreLEDs(led_state);
+    }
+
     // USB state changes
     virtual void onConfigured() override {
         _leds->clearErrorLED();
@@ -127,10 +152,9 @@ class Controller : private Keyboard::Callback,
         _leds->setErrorLED();
     }
     virtual void onSuspend() override {
-        _leds->clearPowerLED();
+        suspend();
     }
     virtual void onWake() override {
-        _leds->setPowerLED();
     }
 
     virtual void updateLeds(uint8_t led_value) {

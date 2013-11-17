@@ -137,6 +137,9 @@ class UsbController {
         return (_state & (StateFlags::CONFIGURED | StateFlags::SUSPENDED)) ==
             StateFlags::CONFIGURED;
     }
+    bool suspended() const {
+        return (_state & (StateFlags::SUSPENDED));
+    }
     StateFlags getState() const {
         return static_cast<StateFlags>(_state);
     }
