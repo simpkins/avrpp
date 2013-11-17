@@ -23,6 +23,16 @@
     static inline void set_ ## reg_name(reg_name ## Flags flags) { \
         reg_name = static_cast<IntType>(flags); \
     } \
+    static inline void add_ ## reg_name(reg_name ## Flags) \
+        __attribute__((always_inline)); \
+    static inline void add_ ## reg_name(reg_name ## Flags flags) { \
+        reg_name |= static_cast<IntType>(flags); \
+    } \
+    static inline void remove_ ## reg_name(reg_name ## Flags) \
+        __attribute__((always_inline)); \
+    static inline void remove_ ## reg_name(reg_name ## Flags flags) { \
+        reg_name &= ~static_cast<IntType>(flags); \
+    } \
     static inline reg_name ## Flags get_ ## reg_name() \
         __attribute__((always_inline)); \
     static inline reg_name ## Flags get_ ## reg_name() { \

@@ -102,6 +102,22 @@ class UsbInterface {
 
 class UsbController {
   public:
+    enum StateFlags : uint8_t {
+        CONFIGURED = 0x01,
+        SUSPENDED = 0x02,
+    };
+    class StateCallback {
+      public:
+        virtual ~StateCallback() {}
+
+        // Note that the state callback functions are invoked
+        // while in interrupt context.
+        virtual void onConfigured() {}
+        virtual void onUnconfigured() {}
+        virtual void onSuspend() {}
+        virtual void onWake() {}
+    };
+
     static UsbController *singleton() {
         return &s_controller;
     }
@@ -118,7 +134,24 @@ class UsbController {
      * and false if we do not have a configuration negotiated with the host.
      */
     bool configured() const {
-        return _configured;
+        return (_state & (StateFlags::CONFIGURED | StateFlags::SUSPENDED)) ==
+            StateFlags::CONFIGURED;
+    }
+    StateFlags getState() const {
+        return static_cast<StateFlags>(_state);
+    }
+
+    /**
+     * Set the StateCallback to be invoked on a USB state change event.
+     *
+     * Only one StateCallback may be installed at a time. Calling
+     * setStateCallback() replaces any existing callback.
+     */
+    void setStateCallback(StateCallback* callback) {
+        _stateCallback = callback;
+    }
+    void clearStateCallback() {
+        _stateCallback = nullptr;
     }
 
     uint8_t getEndpoint0Size() const {
@@ -189,12 +222,15 @@ class UsbController {
 
     void processSetupPacket();
     bool processDeviceSetupPacket(const SetupPacket *pkt);
+    void configure();
+    void unconfigure();
 
-    volatile bool _configured{false};
+    volatile uint8_t _state{0};
     UsbInterface* _interfaces[MAX_INTERFACES]{nullptr};
     UsbEndpoint* _endpoints[MAX_ENDPOINTS]{nullptr};
     uint8_t _endpoint0Size{32};
     UsbDescriptorMap _descriptors;
+    StateCallback *_stateCallback{nullptr};
 
     static UsbController s_controller;
 };

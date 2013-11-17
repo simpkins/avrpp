@@ -18,23 +18,30 @@
 
 F_LOG_LEVEL(2);
 
-class LedController : public KeyboardIface::LedCallback {
+class LedController {
   public:
     LedController() {
         // The LEDs are C0 through C4.
-        // Initialize all LEDs off (high).
+        // Start with the power and error LEDs on, and all others off.
+        // (The error LED will be cleared when USB is configured.)
         DDRC = 0x3f;
-        PORTC = 0xff;
+        PORTC = 0xe7;
     }
 
-    virtual void updateLeds(uint8_t led_value) {
-        _leds = led_value;
+    void setPowerLED() {
+        PORTC &= ~0x08;
+    }
+    void clearPowerLED() {
+        PORTC |= 0x08;
+    }
+    void setErrorLED() {
+        PORTC &= ~0x10;
+    }
+    void clearErrorLED() {
+        PORTC |= 0x10;
+    }
 
-        enum : uint8_t{
-            PIN_NUM_LOCK = 0x01,
-            PIN_CAPS_LOCK = 0x02,
-            PIN_SCROLL_LOCK = 0x04,
-        };
+    void setKeyboardLEDs(uint8_t led_value) {
         uint8_t new_pins = PORTC;
         if (led_value & LED_NUM_LOCK) {
             new_pins &= ~PIN_NUM_LOCK;
@@ -54,16 +61,18 @@ class LedController : public KeyboardIface::LedCallback {
         PORTC = new_pins;
     }
 
-    void refresh() {
-        AtomicGuard ag;
-        updateLeds(_leds);
-    }
-
   private:
-    uint8_t _leds{0};
+    enum : uint8_t{
+        LED_MASK = 0x1f,
+        PIN_NUM_LOCK = 0x01,
+        PIN_CAPS_LOCK = 0x02,
+        PIN_SCROLL_LOCK = 0x04,
+    };
 };
 
-class Controller : private Keyboard::Callback {
+class Controller : private Keyboard::Callback,
+                   private KeyboardIface::LedCallback,
+                   private UsbController::StateCallback {
   public:
     Controller(Keyboard *kbd, LedController *leds)
         : _kbd(kbd),
@@ -86,7 +95,8 @@ class Controller : private Keyboard::Callback {
 
         // Initialize USB
         auto usb = UsbController::singleton();
-        _kbdIface.setLedCallback(_leds);
+        usb->setStateCallback(this);
+        _kbdIface.setLedCallback(this);
         usb->addInterface(&_kbdIface);
 #if USB_DEBUG
         usb->addInterface(&_dbgIface);
@@ -96,10 +106,6 @@ class Controller : private Keyboard::Callback {
         sei();
         // Wait for USB configuration with the host to complete
         waitForUsbInit(usb);
-
-        // waitForUsbInit() modifies the LEDs, so reset them back
-        // to the desired state.
-        _leds->refresh();
     }
 
     void loop() {
@@ -108,30 +114,27 @@ class Controller : private Keyboard::Callback {
 
   private:
     void waitForUsbInit(UsbController *usb) {
-        // Cycle the LEDs through a pattern while we wait
-        // Left to right, then back
-        static const uint8_t PROGMEM pattern[] = {
-            0xfe, 0xfd, 0xfb, 0xf7, 0xef, 0xf7, 0xfb, 0xfd
-        };
-
-        uint8_t pattern_idx = 0;
-        uint8_t n = 0;
-        PORTC = pgm_read_byte(pattern + pattern_idx);
         while (!usb->configured()) {
             _delay_ms(1);
-            ++n;
-            if (n == 40) {
-                n = 0;
-                ++pattern_idx;
-                if (pattern_idx >= sizeof(pattern)) {
-                    pattern_idx = 0;
-                }
-                PORTC = pgm_read_byte(pattern + pattern_idx);
-            }
         }
+    }
 
-        // Clear all the LEDs when we are done.
-        PORTC = 0xff;
+    // USB state changes
+    virtual void onConfigured() override {
+        _leds->clearErrorLED();
+    }
+    virtual void onUnconfigured() override {
+        _leds->setErrorLED();
+    }
+    virtual void onSuspend() override {
+        _leds->clearPowerLED();
+    }
+    virtual void onWake() override {
+        _leds->setPowerLED();
+    }
+
+    virtual void updateLeds(uint8_t led_value) {
+        _leds->setKeyboardLEDs(led_value);
     }
 
     virtual void onChange(Keyboard* kbd) override {

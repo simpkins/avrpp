@@ -94,9 +94,10 @@ UsbController::init(uint8_t endpoint0_size,
     set_USBCON(USBCONFlags::ENABLE | USBCONFlags::ENABLE_OTG_PAD);
     // Enable the attach resistor
     set_UDCON(UDCONFlags::NONE);
-    _configured = false;
+    _state = 0;
     // Enable desired interrupts
-    set_UDIEN(UDIENFlags::END_OF_RESET | UDIENFlags::START_OF_FRAME);
+    set_UDIEN(UDIENFlags::END_OF_RESET | UDIENFlags::START_OF_FRAME |
+              UDIENFlags::SUSPEND);
 }
 
 void
@@ -118,9 +119,12 @@ UsbController::generalInterrupt() {
     const auto intr_flags = get_UDINT();
     set_UDINT(UDINTFlags::NONE);
 
+    // END_OF_RESET:
+    // The host just reset us.  Move back to an unconfigured state,
+    // and wait to be configured again.
     if (isset(intr_flags, UDINTFlags::END_OF_RESET)) {
         // We have received a reset signal from the host.
-        // Reset the USB configuration.  We'll re-enable the _configured
+        // Reset the USB configuration.  We'll re-enable the CONFIGURED
         // flag once we receive a SET_CONFIGURATION request from the host.
         UENUM = 0;
         set_UECONX(UECONXFlags::ENABLE);
@@ -128,16 +132,34 @@ UsbController::generalInterrupt() {
         set_UECFG1X(UECFG1XFlags::CFG1_ALLOC | UECFG1XFlags::SINGLE_BANK |
                     usb_cfg_size(_endpoint0Size));
         set_UEIENX(UEIENXFlags::RX_SETUP);
-        _configured = false;
+        _state &= ~StateFlags::CONFIGURED;
+        if (_stateCallback) {
+            _stateCallback->onUnconfigured();
+        }
     }
 
-    // TODO: Handle SUSPEND and WAKE_UP interrupts.
-
-    if (isset(intr_flags, UDINTFlags::START_OF_FRAME) && _configured) {
+    if (isset(intr_flags, UDINTFlags::START_OF_FRAME) && configured()) {
         for (const auto& iface : _interfaces) {
             if (iface) {
                 iface->startOfFrame();
             }
+        }
+    }
+
+    if (isset(intr_flags, UDINTFlags::SUSPEND)) {
+        _state |= StateFlags::SUSPENDED;
+        add_UDIEN(UDIENFlags::WAKE_UP);
+        add_USBCON(USBCONFlags::FREEZE_CLOCK);
+        if (_stateCallback) {
+            _stateCallback->onSuspend();
+        }
+    }
+    if (isset(intr_flags, UDINTFlags::WAKE_UP)) {
+        remove_USBCON(USBCONFlags::FREEZE_CLOCK);
+        remove_UDIEN(UDIENFlags::WAKE_UP);
+        _state &= ~StateFlags::SUSPENDED;
+        if (_stateCallback) {
+            _stateCallback->onWake();
         }
     }
 }
@@ -276,20 +298,16 @@ UsbController::processDeviceSetupPacket(const SetupPacket *pkt) {
         UDADDR = pkt->wValue | (1 << ADDEN);
         return true;
     } else if (pkt->bRequest == StdRequestType::SET_CONFIGURATION) {
-        _configured = pkt->wValue;
         sendIn();
-        for (const auto& ep : _endpoints) {
-            if (!ep) {
-                continue;
-            }
-            ep->configure();
+        if (pkt->wValue) {
+            configure();
+        } else {
+            unconfigure();
         }
-        UERST = 0x1E;
-        UERST = 0;
         return true;
     } else if (pkt->bRequest == StdRequestType::GET_CONFIGURATION) {
         waitForTxReady();
-        UEDATX = _configured;
+        UEDATX = (_state & StateFlags::CONFIGURED) ? 1 : 0;
         sendIn();
         return true;
     } else if (pkt->bRequest == StdRequestType::GET_STATUS) {
@@ -300,6 +318,42 @@ UsbController::processDeviceSetupPacket(const SetupPacket *pkt) {
         return true;
     }
     return false;
+}
+
+void
+UsbController::configure() {
+    if (_state & StateFlags::CONFIGURED) {
+        // Already configured
+        return;
+    }
+
+    _state |= StateFlags::CONFIGURED;
+
+    for (const auto& ep : _endpoints) {
+        if (!ep) {
+            continue;
+        }
+        ep->configure();
+    }
+    UERST = 0x1E;
+    UERST = 0;
+
+    if (_stateCallback) {
+        _stateCallback->onConfigured();
+    }
+}
+
+void
+UsbController::unconfigure() {
+    if (!(_state & StateFlags::CONFIGURED)) {
+        // Already unconfigured
+        return;
+    }
+
+    _state &= ~StateFlags::CONFIGURED;
+    if (_stateCallback) {
+        _stateCallback->onUnconfigured();
+    }
 }
 
 bool
