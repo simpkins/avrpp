@@ -37,9 +37,17 @@ def prog_emitter(target, source, env):
         if deps_param is None:
             deps = set()
         else:
-            deps = set([env.File(lib_prefix + dep + lib_suffix,
-                                 directory=lib.dir)
-                        for dep in lib.env.get('deps', [])])
+            deps = set()
+            for dep in deps_param:
+                parts = dep.rsplit(':', 1)
+                if len(parts) == 1:
+                    dep_dir = lib.dir
+                    dep_base = dep
+                else:
+                    dep_dir = lib.dir.Dir(parts[0])
+                    dep_base = parts[1]
+                deps.add(env.File(lib_prefix + dep_base + lib_suffix,
+                                  directory=dep_dir))
         all_libs[lib] = deps
         src_libs.update(deps)
 
