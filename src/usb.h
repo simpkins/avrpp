@@ -2,6 +2,7 @@
 #pragma once
 
 #include <avrpp/avr_registers.h>
+#include <avrpp/usb_descriptors.h>
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -62,7 +63,6 @@ enum {
 };
 
 class UsbController;
-class UsbDescriptorMap;
 
 class UsbEndpoint {
   public:
@@ -109,7 +109,7 @@ class UsbController {
     bool addInterface(UsbInterface *iface);
     bool addEndpoint(UsbEndpoint *endpoint);
 
-    void init(uint8_t endpoint0_size, UsbDescriptorMap *descriptors);
+    void init(uint8_t endpoint0_size, pgm_ptr<UsbDescriptor> descriptors);
 
     /**
      * Return whether or not USB is configured.
@@ -194,7 +194,7 @@ class UsbController {
     UsbInterface* _interfaces[MAX_INTERFACES]{nullptr};
     UsbEndpoint* _endpoints[MAX_ENDPOINTS]{nullptr};
     uint8_t _endpoint0Size{32};
-    UsbDescriptorMap* _descriptors{nullptr};
+    UsbDescriptorMap _descriptors;
 
     static UsbController s_controller;
 };

@@ -13,7 +13,12 @@ struct UsbDescriptor {
 
 class UsbDescriptorMap {
   public:
-    UsbDescriptorMap(pgm_ptr<UsbDescriptor> descriptors);
+    UsbDescriptorMap() {}
+    explicit UsbDescriptorMap(pgm_ptr<UsbDescriptor> descriptors);
+
+    void reset(pgm_ptr<UsbDescriptor> descriptors) {
+        _descriptors = descriptors;
+    }
 
     /*
      * Find the descriptor with the specified wValue and wIndex.

@@ -237,8 +237,7 @@ int main() {
     // Initialize USB
     auto usb = UsbController::singleton();
     usb->addInterface(&dbg_if);
-    UsbDescriptorMap descriptors(pgm_cast(usb_descriptors));
-    usb->init(ENDPOINT0_SIZE, &descriptors);
+    usb->init(ENDPOINT0_SIZE, pgm_cast(usb_descriptors));
     // Enable interrupts
     sei();
     // Wait for USB configuration with the host to complete

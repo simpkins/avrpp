@@ -70,11 +70,12 @@ UsbController::addEndpoint(UsbEndpoint* endpoint) {
 }
 
 void
-UsbController::init(uint8_t endpoint0_size, UsbDescriptorMap *descriptors) {
+UsbController::init(uint8_t endpoint0_size,
+                    pgm_ptr<UsbDescriptor> descriptors) {
     AtomicGuard guard;
 
     _endpoint0Size = endpoint0_size;
-    _descriptors = descriptors;
+    _descriptors.reset(descriptors);
 
     // Enable the USB pads regulators, and configure for device mode
     set_UHWCON(UHWCONFlags::DEVICE_MODE | UHWCONFlags::ENABLE_PADS_REGULATOR);
@@ -171,8 +172,8 @@ void
 UsbController::handleGetDescriptor(const SetupPacket *pkt) {
     const uint8_t *desc_addr;
     uint8_t desc_length;
-    if (!_descriptors->findDescriptor(pkt->wValue, pkt->wIndex,
-                                      &desc_addr, &desc_length)) {
+    if (!_descriptors.findDescriptor(pkt->wValue, pkt->wIndex,
+                                     &desc_addr, &desc_length)) {
         stall();
         return;
     }
