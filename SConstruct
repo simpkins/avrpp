@@ -66,5 +66,5 @@ def variant(speed, name):
     Export({'AVR_ENV': env})
     SConscript('src/SConscript', variant_dir=variant_dir, duplicate=False)
 
-variant(1000000, '1MHz')
+variant(4000000, '4MHz')
 #variant(16000000, '16MHz')

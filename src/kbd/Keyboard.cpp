@@ -20,11 +20,16 @@ void
 Keyboard::loop(Callback *callback) {
     prepare();
 
-    // Delay for 2ms between iterations to avoid detecting false key
-    // presses/releases due to key bounce.  (The Cherry MX switches in my
-    // current keyboards are rated at 5ms, but in practice 2ms seems to work
-    // fine for me.)
-    const uint8_t bounce_ms = 2;
+    // bounce_ms is the duration to delay between loops.  This is used to
+    // ensure that false key presses/releases aren't detected due to key
+    // bounce.
+    //
+    // TODO: We should use a counter to track how long the iteration takes,
+    // and then sleep for any remaining time.  At the moment with my current
+    // implementation, a 4MHz build takes a little under 5ms per iteration, so
+    // we set bounce_ms to 0.  (This time varies little if it needs to perform
+    // ghosting resolution.)
+    const uint8_t bounce_ms = 0;
     while (true) {
         if (scanKeys()) {
             callback->onChange(this);
