@@ -42,6 +42,7 @@ KbdDiodeImpl<NC, NR, ImplT>::scanKeys() {
     _curMap->clear();
 
     // Perform a basic scan over the keys
+    uint8_t numPressed = 0;
     for (uint8_t col = 0; col < NUM_COLS; ++col) {
         _prepareColScan(col);
         _delay_us(5);
@@ -50,15 +51,18 @@ KbdDiodeImpl<NC, NR, ImplT>::scanKeys() {
         _readRows(&rows);
         for (uint8_t row = 0; row < NUM_ROWS; ++row) {
             if (rows[row]) {
+                ++numPressed;
                 _curMap->set(getIndex(col, row));
             }
         }
     }
 
-    // Now look for possible ghosting, and attempt to resolve it,
-    // or perform blocking if we cannot determing if a key press is
-    // real or ghosting.
-    resolveGhosting();
+    if (numPressed >= 4) {
+        // Now look for possible ghosting, and attempt to resolve it,
+        // or perform blocking if we cannot determing if a key press is
+        // real or ghosting.
+        resolveGhosting();
+    }
 
     return (*_curMap != *_prevMap);
 }
