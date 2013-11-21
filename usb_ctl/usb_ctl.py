@@ -43,10 +43,12 @@ def wait_for_any(ids):
                     return dev
 
         if first:
-            print('Waiting for device...', end='', flush=True)
+            print('Waiting for device...', end='')
+            sys.stdout.flush()
             first = False
         elif n == 30:
-            print('.', end='', flush=True)
+            print('.', end='')
+            sys.stdout.flush()
             n = 0
 
         n += 1
