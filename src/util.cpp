@@ -38,6 +38,10 @@ extern "C" void __cxa_pure_virtual() {
     wdt_enable(WDTO_15MS);
 }
 
+void* operator new(size_t size) noexcept {
+    return malloc(size);
+}
+
 void operator delete(void* p) {
     free(p);
 }

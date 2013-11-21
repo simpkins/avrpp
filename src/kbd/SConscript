@@ -4,12 +4,14 @@ env = AVR_ENV
 env.AvrLibrary(
     'kbd',
     source=[
-        'Keyboard.cpp'
+        'KbdController.cpp',
+        'Keyboard.cpp',
     ],
     headers=[
+        'KbdController.h',
         'KbdDiodeImpl.h',
         'KbdDiodeImpl-defs.h',
-        'Keyboard.h'
+        'Keyboard.h',
     ],
     deps=['..:log', '..:util'],
 )

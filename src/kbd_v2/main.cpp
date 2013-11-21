@@ -5,43 +5,40 @@
 
 #include <avrpp/avr_registers.h>
 #include <avrpp/log.h>
-#include <avrpp/dbg_endpoint.h>
-#include <avrpp/kbd_endpoint.h>
-#include <avrpp/usb.h>
+#include <avrpp/kbd/KbdController.h>
 #include <avrpp/usb_descriptors.h>
 #include <avrpp/usb_hid_keyboard.h>
 #include <avrpp/util.h>
 
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <util/delay.h>
-
 F_LOG_LEVEL(2);
 
-class LedController {
+class LedController : public KbdController::LedController {
   public:
     LedController() {
         // The LEDs are C0 through C4.
+        // Note that C6 and C7 are inputs for the dip switch,
+        // and should be configured as inputs with pull-up resistors.
+        //
         // Start with the power and error LEDs on, and all others off.
         // (The error LED will be cleared when USB is configured.)
         DDRC = 0x3f;
-        PORTC = 0xe7;
+        PORTC = 0xff & ~(PIN_POWER | PIN_ERROR);
     }
 
-    void setPowerLED() {
-        PORTC &= ~0x08;
+    void setPowerLED() override {
+        PORTC &= ~PIN_POWER;
     }
-    void clearPowerLED() {
-        PORTC |= 0x08;
+    void clearPowerLED() override {
+        PORTC |= PIN_POWER;
     }
-    void setErrorLED() {
-        PORTC &= ~0x10;
+    void setErrorLED() override {
+        PORTC &= ~PIN_ERROR;
     }
-    void clearErrorLED() {
-        PORTC |= 0x10;
+    void clearErrorLED() override {
+        PORTC |= PIN_ERROR;
     }
 
-    void setKeyboardLEDs(uint8_t led_value) {
+    void setKeyboardLEDs(uint8_t led_value) override {
         uint8_t new_pins = PORTC;
         if (led_value & LED_NUM_LOCK) {
             new_pins &= ~PIN_NUM_LOCK;
@@ -64,12 +61,12 @@ class LedController {
     // Turn off all LEDs for entering suspend mode.
     // Returns the current LED state.  This can be restored after suspending
     // by calling restoreLEDs().
-    uint8_t suspendLEDs() {
+    uint8_t suspendLEDs() override {
         uint8_t current_leds = ((~PORTC) & LED_MASK);
         PORTC |= LED_MASK;
         return current_leds;
     }
-    void restoreLEDs(uint8_t value) {
+    void restoreLEDs(uint8_t value) override {
         PORTC = (PORTC & ~LED_MASK) | ~value;
     }
 
@@ -79,103 +76,9 @@ class LedController {
         PIN_NUM_LOCK = 0x01,
         PIN_CAPS_LOCK = 0x02,
         PIN_SCROLL_LOCK = 0x04,
+        PIN_POWER = 0x08,
+        PIN_ERROR = 0x10,
     };
-};
-
-class Controller : private Keyboard::Callback,
-                   private KeyboardIface::LedCallback,
-                   private UsbController::StateCallback {
-  public:
-    Controller(Keyboard *kbd, LedController *leds)
-        : _kbd(kbd),
-          _leds(leds) {
-#if USB_DEBUG
-        set_log_putchar(DebugIface::putcharC, &_dbgIface);
-#endif
-    }
-
-    void init() {
-        FLOG(2, "Booting\n");
-
-        // TODO: Apply other power saving settings as recommended by
-        // the at90usb1286 manual.
-        // The HalfKay bootloader does seem to leave some features enabled that
-        // consume power.  We draw a couple mA more when started via a HalfKay
-        // reset than we do when restarted from a plain power on.
-        //
-        // PRR0 and PRR1 control some power reduction settings.
-
-        // Initialize USB
-        auto usb = UsbController::singleton();
-        usb->setStateCallback(this);
-        _kbdIface.setLedCallback(this);
-        usb->addInterface(&_kbdIface);
-#if USB_DEBUG
-        usb->addInterface(&_dbgIface);
-#endif
-        usb->init(ENDPOINT0_SIZE, pgm_cast(usb_descriptors));
-        // Enable interrupts
-        sei();
-        // Wait for USB configuration with the host to complete
-        waitForUsbInit(usb);
-    }
-
-    void loop() {
-        _kbd->loop(this);
-    }
-
-  private:
-    void waitForUsbInit(UsbController *usb) {
-        while (!usb->configured()) {
-            _delay_ms(1);
-        }
-    }
-
-    void suspend() {
-        auto led_state = _leds->suspendLEDs();
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        AtomicGuard ag;
-        if (UsbController::singleton()->suspended()) {
-            sleep_enable();
-            sei();
-            sleep_cpu();
-            sleep_disable();
-        }
-        _leds->restoreLEDs(led_state);
-    }
-
-    // USB state changes
-    virtual void onConfigured() override {
-        _leds->clearErrorLED();
-    }
-    virtual void onUnconfigured() override {
-        _leds->setErrorLED();
-    }
-    virtual void onSuspend() override {
-        suspend();
-    }
-    virtual void onWake() override {
-    }
-
-    virtual void updateLeds(uint8_t led_value) {
-        _leds->setKeyboardLEDs(led_value);
-    }
-
-    virtual void onChange(Keyboard* kbd) override {
-        uint8_t keys_len = KeyboardIface::MAX_KEYS;
-        uint8_t pressed_keys[KeyboardIface::MAX_KEYS]{0};
-        uint8_t modifier_mask{0};
-
-        kbd->getState(&modifier_mask, pressed_keys, &keys_len);
-        _kbdIface.update(pressed_keys, modifier_mask);
-    }
-
-    Keyboard *_kbd{nullptr};
-    LedController *_leds;
-    KeyboardIface _kbdIface{KEYBOARD_INTERFACE, KEYBOARD_ENDPOINT};
-#if USB_DEBUG
-    DebugIface _dbgIface{DEBUG_INTERFACE, DEBUG_ENDPOINT, 4096, DEBUG_SIZE};
-#endif
 };
 
 int main() {
@@ -184,8 +87,13 @@ int main() {
 
     KeyboardV2 kbd;
     LedController leds;
-    Controller controller(&kbd, &leds);
-    controller.init();
+    KbdController controller(&kbd, &leds,
+                             KEYBOARD_INTERFACE, KEYBOARD_ENDPOINT);
+#if USB_DEBUG
+    controller.cfgDebugIface(DEBUG_INTERFACE, DEBUG_ENDPOINT, 4096, DEBUG_SIZE);
+#endif
+    controller.init(ENDPOINT0_SIZE, pgm_cast(usb_descriptors));
     FLOG(1, "Keyboard initialized\n");
     controller.loop();
+    return 0;
 }
