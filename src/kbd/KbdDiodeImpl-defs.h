@@ -10,13 +10,13 @@ KbdDiodeImpl<NC, NR, ImplT>::getState(uint8_t *modifiers,
                                       uint8_t *keys_len) const {
     *modifiers = 0;
 
-    FLOG(3, "getState():");
+    FLOG(5, "getState():");
     uint8_t pressed_idx = 0;
     for (uint8_t col = 0; col < NUM_COLS; ++col) {
         for (uint8_t row = 0; row < NUM_ROWS; ++row) {
             auto idx = getIndex(col, row);
             if (_curMap->get(idx)) {
-                FLOG(3, " (%d,%d)=%d", col, row, _keyTable[idx]);
+                FLOG(5, " (%d,%d)=%d", col, row, _keyTable[idx]);
                 if (pressed_idx < *keys_len) {
                     keys[pressed_idx] = _keyTable[idx];
                 }
@@ -26,7 +26,7 @@ KbdDiodeImpl<NC, NR, ImplT>::getState(uint8_t *modifiers,
             }
         }
     }
-    FLOG(3, " [%d pressed]\n", pressed_idx);
+    FLOG(5, " [%d pressed]\n", pressed_idx);
 
     *keys_len = pressed_idx;
 }
@@ -172,7 +172,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 void
 KbdDiodeImpl<NC, NR, ImplT>::performBlocking(uint8_t col_a, uint8_t col_b,
                                              uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "Performing blocking on rectangle (%d, %d) x (%d, %d)\n",
+    FLOG(3, "Performing blocking on rectangle (%d, %d) x (%d, %d)\n",
          col_a, row_a, col_b, row_b);
 
     // Some of the keys in this rectangle are likely not really down,
@@ -204,8 +204,8 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::resolveRect(uint8_t col_a, uint8_t col_b,
                                          uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "attemping to resolving ghosting on rectangle "
-         "(%d, %d) x (%d, %d)\n", col_a, row_a, col_b, row_b);
+    FLOG(3, "attemping to resolve ghosting on rectangle (%d, %d) x (%d, %d)\n",
+         col_a, row_a, col_b, row_b);
 
     // Check to see which keys have diodes.
     bool diode_aa = _diodes[getIndex(col_a, row_a)];
@@ -220,13 +220,13 @@ KbdDiodeImpl<NC, NR, ImplT>::resolveRect(uint8_t col_a, uint8_t col_b,
 
     // If there are no diodes we can't resolve ghosting
     if (num_diodes == 0) {
-        FLOG(4, "  No diodes: unable to resolve ghosting\n");
+        FLOG(3, "  No diodes: unable to resolve ghosting\n");
         return false;
     }
 
     // If there are diodes on all 4 keys then all 4 must actually be down.
     if (num_diodes == 4) {
-        FLOG(4, "  4 diodes: all keys valid\n");
+        FLOG(3, "  4 diodes: all keys valid\n");
         return true;
     }
 
@@ -289,7 +289,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::ghost1Diode(uint8_t col_a, uint8_t col_b,
                                          uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "  Resolving ghosting with 1 diode at (%d, %d)\n",
+    FLOG(3, "  Resolving ghosting with 1 diode at (%d, %d)\n",
          col_a, row_a);
     // Signal col_b, and check to see if we receive the signal on col_a.
     // If we detect a signal, then AB is pressed.  Otherwise, AB is not pressed
@@ -299,7 +299,7 @@ KbdDiodeImpl<NC, NR, ImplT>::ghost1Diode(uint8_t col_a, uint8_t col_b,
     _delay_us(5);
     _readCols(&cols);
     if (!cols.get(col_a)) {
-        FLOG(4, "  Fixed ghosting on (%d, %d)\n", col_a, row_b);
+        FLOG(3, "  Fixed ghosting on (%d, %d)\n", col_a, row_b);
         _curMap->unset(getIndex(col_a, row_b));
         return true;
     }
@@ -311,7 +311,7 @@ KbdDiodeImpl<NC, NR, ImplT>::ghost1Diode(uint8_t col_a, uint8_t col_b,
     _readCols(&cols);
     _finishRowScan();
     if (!cols.get(col_a)) {
-        FLOG(4, "  Fixed ghosting on (%d, %d)\n", col_b, row_a);
+        FLOG(3, "  Fixed ghosting on (%d, %d)\n", col_b, row_a);
         _curMap->unset(getIndex(col_b, row_a));
         return true;
     }
@@ -322,7 +322,7 @@ KbdDiodeImpl<NC, NR, ImplT>::ghost1Diode(uint8_t col_a, uint8_t col_b,
     // AB and BA are handled above.)
     //
     // Perform blocking only on AA.
-    FLOG(4, "  Performing blocking on single diode (%d, %d)\n", col_a, row_a);
+    FLOG(3, "  Performing blocking on single diode (%d, %d)\n", col_a, row_a);
     auto idx_aa = getIndex(col_a, row_a);
     if (!_prevMap->get(idx_aa)) {
         _curMap->unset(idx_aa);
@@ -335,7 +335,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::ghost2DiodesCol(uint8_t col_a, uint8_t col_b,
                                              uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "  2 diodes in col %d\n", col_a);
+    FLOG(3, "  2 diodes in col %d\n", col_a);
     // The keys in col B are protected by the diodes, and are definitely down.
     // Unfortunately we can't tell about the keys in col A, so perform blocking
     // for them.
@@ -356,7 +356,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::ghost2DiodesRow(uint8_t col_a, uint8_t col_b,
                                              uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "  2 diodes in row %d\n", row_a);
+    FLOG(3, "  2 diodes in row %d\n", row_a);
     // The keys in row B are protected by the diodes, and are definitely down.
     // Unfortunately we can't tell about the keys in row A, so perform blocking
     // for them.
@@ -377,7 +377,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::ghost2DiodesDiag(uint8_t col_a, uint8_t col_b,
                                               uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "  2 diagonal diodes at (%d, %d) and (%d, %d) %d\n",
+    FLOG(3, "  2 diagonal diodes at (%d, %d) and (%d, %d) %d\n",
          col_a, row_a, col_b, row_b);
     // AA and BB are definitely down, we only need to worry about AB and BA.
     // Scan row_a.  We will see col_b if and only if BA is pressed.
@@ -410,7 +410,7 @@ template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::ghost3Diodes(uint8_t col_a, uint8_t col_b,
                                           uint8_t row_a, uint8_t row_b) {
-    FLOG(4, "  Resolving ghosting with 3 diodes\n");
+    FLOG(3, "  Resolving ghosting with 3 diodes\n");
     // We only need to detect ghosting for (col_b, row_b).
     // All other keys are protected by the diode on the opposite corner.
     // Unfortunately we can't tell if BB is pressed, so perform blocking on it.
