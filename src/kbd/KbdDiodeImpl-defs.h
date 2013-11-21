@@ -291,12 +291,44 @@ KbdDiodeImpl<NC, NR, ImplT>::ghost1Diode(uint8_t col_a, uint8_t col_b,
                                          uint8_t row_a, uint8_t row_b) {
     FLOG(3, "  Resolving ghosting with 1 diode at (%d, %d)\n",
          col_a, row_a);
+
+    // Re-scan both columns, to see if the ghosting is still present.
+    // Some time has elapsed since the initial scan, and the user may have
+    // lifted off a key already.  If this has occurred, we may make the wrong
+    // ghosting decision if we don't detect it.
+    RowMap rows;
+    _prepareColScan(col_a);
+    _delay_us(5);
+    _readRows(&rows);
+    if (!rows.get(row_a)) {
+        FLOG(3, "  Key lifted off (%d, %d)\n", col_a, row_a);
+        _curMap->unset(getIndex(col_a, row_a));
+        return true;
+    }
+    if (!rows.get(row_b)) {
+        FLOG(3, "  Key lifted off (%d, %d)\n", col_a, row_b);
+        _curMap->unset(getIndex(col_a, row_b));
+        return true;
+    }
+
+    _prepareColScan(col_b);
+    _delay_us(5);
+    _readRows(&rows);
+    if (!rows.get(row_a)) {
+        FLOG(3, "  Key lifted off (%d, %d)\n", col_b, row_a);
+        _curMap->unset(getIndex(col_b, row_a));
+        return true;
+    }
+    if (!rows.get(row_b)) {
+        FLOG(3, "  Key lifted off (%d, %d)\n", col_b, row_b);
+        _curMap->unset(getIndex(col_b, row_b));
+        return true;
+    }
+
     // Signal col_b, and check to see if we receive the signal on col_a.
     // If we detect a signal, then AB is pressed.  Otherwise, AB is not pressed
     // and everything else in the rectangle is.
-    _prepareColScan(col_b);
     ColMap cols;
-    _delay_us(5);
     _readCols(&cols);
     if (!cols.get(col_a)) {
         FLOG(3, "  Fixed ghosting on (%d, %d)\n", col_a, row_b);
