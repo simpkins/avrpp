@@ -26,9 +26,8 @@ Keyboard::loop(Callback *callback) {
     //
     // TODO: We should use a counter to track how long the iteration takes,
     // and then sleep for any remaining time.  At the moment with my current
-    // implementation, a 4MHz build takes a little under 5ms per iteration, so
-    // we set bounce_ms to 0.  (This time varies little if it needs to perform
-    // ghosting resolution.)
+    // implementation, a 4MHz build takes around 2.5ms per iteration in the
+    // common case when when no ghosting is detected.
     const uint8_t bounce_ms = 0;
     while (true) {
         if (scanKeys()) {

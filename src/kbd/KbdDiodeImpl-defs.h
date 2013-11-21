@@ -34,6 +34,12 @@ KbdDiodeImpl<NC, NR, ImplT>::getState(uint8_t *modifiers,
 template<uint8_t NC, uint8_t NR, typename ImplT>
 bool
 KbdDiodeImpl<NC, NR, ImplT>::scanKeys() {
+    // Prepare to scan the first column.
+    // It takes a very brief period for the rows to be readable after this,
+    // so do this early, before we actually need to read the rows.
+    // This way we can avoid an artificial delay.
+    _prepareColScan(0);
+
     // Swap _prevMap and _curMap
     auto tmp = _prevMap;
     _prevMap = _curMap;
@@ -44,11 +50,19 @@ KbdDiodeImpl<NC, NR, ImplT>::scanKeys() {
     // Perform a basic scan over the keys
     uint8_t numPressed = 0;
     for (uint8_t col = 0; col < NUM_COLS; ++col) {
-        _prepareColScan(col);
-        _delay_us(5);
-
+        // Read the rows
         RowMap rows;
         _readRows(&rows);
+
+        // Prepare to scan the column for the next iteration.
+        // Do this here since it will take a brief period after
+        // _prepareColScan() returns before the rows are readable.
+        // If we did it just before calling _readRows() we would need
+        // to add an additional delay between the two calls.
+        if (col + 1 < NUM_COLS) {
+            _prepareColScan(col + 1);
+        }
+
         for (uint8_t row = 0; row < NUM_ROWS; ++row) {
             if (rows[row]) {
                 ++numPressed;
