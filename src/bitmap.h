@@ -32,7 +32,7 @@ struct Bitmap {
     }
 
     void clear() {
-        const uint8_t end = 1 + (SIZE >> 3);
+        const uint8_t end = NUM_BYTES;
         for (uint8_t n = 0; n < end; ++n) {
             bytes[n] = 0;
         }
@@ -45,6 +45,6 @@ struct Bitmap {
         return !(*this == other);
     }
 
-    enum { NUM_BYTES = 1 + (SIZE >> 3) };
+    enum { NUM_BYTES = (SIZE >> 3) + ((SIZE & 0x7) ? 1 : 0)};
     uint8_t bytes[NUM_BYTES]{0};
 };
