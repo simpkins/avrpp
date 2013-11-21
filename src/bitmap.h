@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string.h>
 
 /*
  * A fixed-size bitmap.

@@ -1,172 +1,101 @@
 // Copyright (c) 2013, Adam Simpkins
 #include "keyboard_v1.h"
 
+#include <avrpp/log.h>
 #include <avrpp/progmem.h>
 #include <avrpp/usb_hid_keyboard.h>
 #include <avrpp/util.h>
 
 #include <util/delay.h>
 
-/*
- * Key maps.
- *
- * The Maltron keyboard wiring rows and columns somewhat match up to physical
- * rows and columns, but diverges in various places (perhaps to avoid common
- * ghosting patterns).
- *
- * However, when I soldered the wires up to my controller, I kept the rows in
- * order for the F pins, but the columns are wired up rather arbitrarily to the
- * B and C pins.  This makes the column layout here somewhat unintuitive.
- */
+F_LOG_LEVEL(1);
+#include <avrpp/kbd/KbdDiodeImpl-defs.h>
 
-/*
- * The default Maltron 89-series QWERTY layout.
- */
-static const uint8_t PROGMEM maltron89_qwerty_key_table[8 * 16] = {
-    // Column 0
-    KEY_NONE, KEY_RIGHT, KEY_NONE, KEY_NONE,
-    KEY_LEFT, KEY_PAGE_DOWN, KEY_PAGE_UP, KEY_NONE,
-    KEY_NONE, KEY_SLASH, KEY_SPACE, KEY_DOWN,
-    KEY_UP, KEY_ENTER, KEY_BACKSLASH, KEY_NONE,
-    // Column 1
-    KEY_NONE, KEY_ENTER /* right thumb return */, KEY_MINUS, KEY_EQUAL,
-    KEY_TAB, KEY_RIGHT_ALT /* AltGr */, KEY_MENU, KEY_NONE,
-    KEY_RIGHT_GUI, KEY_RIGHT_BRACE, KEY_DELETE, KEY_END,
-    KEY_HOME, KEY_BACKSPACE, KEY_LEFT_BRACE, KEY_LEFT_GUI,
-    // Column 2
-    KEY_X, KEY_RIGHT_CTRL, KEY_V, KEY_M,
-    KEY_LEFT_CTRL, KEY_PERIOD, KEY_NONE, KEY_RIGHT_SHIFT,
-    KEY_QUOTE, KEY_COMMA, KEY_N, KEY_RIGHT_ALT,
-    KEY_LEFT_ALT, KEY_B, KEY_C, KEY_Z,
-    // Column 3
-    KEY_S, KEYPAD_PERIOD, KEY_F, KEY_J,
-    KEYPAD_ENTER, KEY_L, KEY_INSERT, KEY_CAPS_LOCK /* right caps lock */,
-    KEY_SEMICOLON, KEY_K, KEY_H, KEY_BACKSPACE /* keypad backspace */,
-    KEYPAD_0, KEY_G, KEY_D, KEY_A,
-    // Column 4
-    KEY_W, KEYPAD_PLUS, KEY_R, KEY_U,
-    KEYPAD_MINUS, KEY_O, KEYPAD_2, KEY_NONE /* right blank */,
-    KEY_P, KEY_I, KEY_Y, KEYPAD_3,
-    KEYPAD_1, KEY_T, KEY_E, KEY_Q,
-    // Column 5
-    KEY_2, KEYPAD_SLASH, KEY_4, KEY_7,
-    KEY_EQUAL /* keypad equal */, KEY_9, KEYPAD_5, KEY_TILDE,
-    KEY_0, KEY_8, KEY_6, KEYPAD_6,
-    KEYPAD_4, KEY_5, KEY_3, KEY_1,
-    // Column 6
-    KEY_NONE /* left blank */, KEYPAD_ASTERIX, KEY_LEFT_SHIFT, KEY_NONE,
-    KEY_NUM_LOCK, KEY_NONE, KEYPAD_8, KEY_NONE,
-    KEY_NONE, KEY_NONE, KEY_NONE, KEYPAD_9,
-    KEYPAD_7, KEY_NONE, KEY_CAPS_LOCK, KEY_ESC,
-    // Column 7
-    KEY_F1, KEY_F9, KEY_F3, KEY_F11,
-    KEY_F5, KEY_PRINTSCREEN, KEY_F7, KEY_PAUSE,
-    KEY_SCROLL_LOCK, KEY_F12, KEY_F10, KEY_F8,
-    KEY_F6, KEY_F4, KEY_F2, KEY_NONE /* Qwerty/Maltron */,
+static const uint8_t PROGMEM default_key_table[16 * 8] = {
+    // Row 0
+    KEY_NONE, KEY_NONE, KEY_X, KEY_S,
+    KEY_W, KEY_2, KEY_LEFT_GUI, KEY_F1,
+    // Row 1
+    KEY_TAB, KEY_ENTER /* right thumb return */, KEY_RIGHT_ALT, KEYPAD_PERIOD,
+    KEYPAD_PLUS, KEYPAD_SLASH, KEYPAD_ASTERIX, KEY_F9,
+    // Row 2
+    KEY_NONE, KEY_MINUS, KEY_V, KEY_F,
+    KEY_R, KEY_4, KEY_LEFT_SHIFT, KEY_F3,
+    // Row 3
+    KEY_NONE, KEY_EQUAL, KEY_M, KEY_J,
+    KEY_U, KEY_7, KEY_NONE, KEY_F11,
+    // Row 4
+    KEY_LEFT_GUI, KEY_ESC, KEY_LEFT_ALT, KEYPAD_ENTER,
+    KEYPAD_MINUS, KEY_EQUAL /* keypad equal */, KEY_NUM_LOCK, KEY_F5,
+    // Row 5
+    KEY_PAGE_DOWN, KEY_RIGHT_ALT /* AltGr */, KEY_PERIOD, KEY_L,
+    KEY_O, KEY_9, KEY_NONE, KEY_PRINTSCREEN,
+    // Row 6
+    KEY_PAGE_UP, KEY_MENU, KEY_NONE, KEY_INSERT,
+    KEYPAD_2, KEYPAD_5, KEYPAD_8, KEY_F7,
+    // Row 7
+    KEY_NONE, KEY_NONE, KEY_RIGHT_SHIFT, KEY_RIGHT_CTRL,
+    KEY_RIGHT_GUI, KEY_TILDE, KEY_NONE, KEY_PAUSE,
+    // Row 8
+    KEY_NONE, KEY_END, KEY_QUOTE, KEY_SEMICOLON,
+    KEY_P, KEY_0, KEY_NONE, KEY_SCROLL_LOCK,
+    // Row 9
+    KEY_SLASH, KEY_RIGHT_BRACE, KEY_COMMA, KEY_K,
+    KEY_I, KEY_8, KEY_NONE, KEY_F12,
+    // Row 10
+    KEY_SPACE, KEY_DELETE, KEY_N, KEY_H,
+    KEY_Y, KEY_6, KEY_NONE, KEY_F10,
+    // Row 11
+    KEY_DOWN, KEY_RIGHT, KEY_RIGHT_CTRL, KEY_BACKSPACE /* keypad backspace */,
+    KEYPAD_3, KEYPAD_6, KEYPAD_9, KEY_F8,
+    // Row 12
+    KEY_UP, KEY_LEFT, KEY_LEFT_CTRL, KEYPAD_0,
+    KEYPAD_1, KEYPAD_4, KEYPAD_7, KEY_F6,
+    // Row 13
+    KEY_ENTER, KEY_BACKSPACE, KEY_B, KEY_G,
+    KEY_T, KEY_5, KEY_NONE, KEY_F4,
+    // Row 14
+    KEY_BACKSLASH, KEY_LEFT_BRACE, KEY_C, KEY_D,
+    KEY_E, KEY_3, KEY_LEFT_CTRL, KEY_F2,
+    // Row 15
+    KEY_NONE, KEY_HOME, KEY_Z, KEY_A,
+    KEY_Q, KEY_1, KEY_ESC, KEY_CAPS_LOCK /* Qwerty/Maltron */,
 };
-static const uint8_t PROGMEM maltron89_qwerty_modifier_table[8 * 16] = {
-    // Column 0
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 1
-    0, 0, 0, 0, 0, MOD_RIGHT_ALT, 0, 0,
-    MOD_RIGHT_GUI, 0, 0, 0, 0, 0, 0, MOD_LEFT_GUI,
-    // Column 2
-    0, MOD_RIGHT_CTRL, 0, 0, MOD_LEFT_CTRL, 0, 0, MOD_RIGHT_SHIFT,
-    0, 0, 0, MOD_RIGHT_ALT, MOD_LEFT_ALT, 0, 0, 0,
-    // Column 3
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 4
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 5
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 6
-    0, 0, MOD_LEFT_SHIFT, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 7
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
+static const uint8_t PROGMEM default_modifier_table[16 * 8] = {
+    0, 0, 0, 0, 0, 0, MOD_LEFT_GUI, 0,  // Row 0
+    0, 0, MOD_RIGHT_ALT, 0, 0, 0, 0, 0,  // Row 1
+    0, 0, 0, 0, 0, 0, MOD_LEFT_SHIFT, 0,  // Row 2
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 3
+    MOD_LEFT_GUI, 0, MOD_LEFT_ALT, 0, 0, 0, 0, 0,  // Row 4
+    0, MOD_RIGHT_ALT, 0, 0, 0, 0, 0, 0,  // Row 5
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 6
+    0, 0, MOD_RIGHT_SHIFT, MOD_RIGHT_CTRL, MOD_RIGHT_GUI, 0, 0, 0,  // Row 7
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 8
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 9
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 10
+    0, 0, MOD_RIGHT_CTRL, 0, 0, 0, 0, 0,  // Row 11
+    0, 0, MOD_LEFT_CTRL, 0, 0, 0, 0, 0,  // Row 12
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 13
+    0, 0, 0, 0, 0, 0, MOD_LEFT_CTRL, 0,  // Row 14
+    0, 0, 0, 0, 0, 0, 0, 0,  // Row 15
 };
 
-/*
- * My preferred layout.
- * This is pretty similar to the Maltron 89-series qwerty layout,
- * but has some frequently used keys swapped to the thumbs.
- *
- * In particular, escape, tab, and the OS key are all mapped to more convenient
- * locations.  Caps Lock is turned into a control key.
- */
-static const uint8_t PROGMEM simpkins_key_table[8 * 16] = {
-    // Column 0
-    KEY_NONE, KEY_TAB, KEY_NONE, KEY_NONE,
-    KEY_LEFT_GUI, KEY_PAGE_DOWN, KEY_PAGE_UP, KEY_NONE,
-    KEY_NONE, KEY_SLASH, KEY_SPACE, KEY_DOWN,
-    KEY_UP, KEY_ENTER, KEY_BACKSLASH, KEY_NONE,
-    // Column 1
-    KEY_NONE, KEY_ENTER /* right thumb return */, KEY_MINUS, KEY_EQUAL,
-    KEY_ESC, KEY_RIGHT_ALT /* AltGr */, KEY_MENU, KEY_NONE,
-    KEY_END, KEY_RIGHT_BRACE, KEY_DELETE, KEY_RIGHT,
-    KEY_LEFT, KEY_BACKSPACE, KEY_LEFT_BRACE, KEY_HOME,
-    // Column 2
-    KEY_X, KEY_RIGHT_CTRL, KEY_V, KEY_M,
-    KEY_LEFT_CTRL, KEY_PERIOD, KEY_NONE, KEY_RIGHT_SHIFT,
-    KEY_QUOTE, KEY_COMMA, KEY_N, KEY_RIGHT_ALT,
-    KEY_LEFT_ALT, KEY_B, KEY_C, KEY_Z,
-    // Column 3
-    KEY_S, KEYPAD_PERIOD, KEY_F, KEY_J,
-    KEYPAD_ENTER, KEY_L, KEY_INSERT, KEY_CAPS_LOCK /* right caps lock */,
-    KEY_SEMICOLON, KEY_K, KEY_H, KEY_BACKSPACE /* keypad backspace */,
-    KEYPAD_0, KEY_G, KEY_D, KEY_A,
-    // Column 4
-    KEY_W, KEYPAD_PLUS, KEY_R, KEY_U,
-    KEYPAD_MINUS, KEY_O, KEYPAD_2, KEY_RIGHT_GUI,
-    KEY_P, KEY_I, KEY_Y, KEYPAD_3,
-    KEYPAD_1, KEY_T, KEY_E, KEY_Q,
-    // Column 5
-    KEY_2, KEYPAD_SLASH, KEY_4, KEY_7,
-    KEY_EQUAL /* keypad equal */, KEY_9, KEYPAD_5, KEY_TILDE,
-    KEY_0, KEY_8, KEY_6, KEYPAD_6,
-    KEYPAD_4, KEY_5, KEY_3, KEY_1,
-    // Column 6
-    KEY_LEFT_GUI, KEYPAD_ASTERIX, KEY_LEFT_SHIFT, KEY_NONE,
-    KEY_NUM_LOCK, KEY_NONE, KEYPAD_8, KEY_NONE,
-    KEY_NONE, KEY_NONE, KEY_NONE, KEYPAD_9,
-    KEYPAD_7, KEY_NONE, KEY_LEFT_CTRL, KEY_ESC,
-    // Column 7
-    KEY_F1, KEY_F9, KEY_F3, KEY_F11,
-    KEY_F5, KEY_PRINTSCREEN, KEY_F7, KEY_PAUSE,
-    KEY_SCROLL_LOCK, KEY_F12, KEY_F10, KEY_F8,
-    KEY_F6, KEY_F4, KEY_F2, KEY_NONE /* Qwerty/Maltron */,
-};
-static const uint8_t PROGMEM simpkins_modifier_table[8 * 16] = {
-    // Column 0
-    0, 0, 0, 0, MOD_LEFT_GUI, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 1
-    0, 0, 0, 0, 0, MOD_RIGHT_ALT, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 2
-    0, MOD_RIGHT_CTRL, 0, 0, MOD_LEFT_CTRL, 0, 0, MOD_RIGHT_SHIFT,
-    0, 0, 0, MOD_RIGHT_ALT, MOD_LEFT_ALT, 0, 0, 0,
-    // Column 3
-    0, 0, 0, 0, 0, 0, 0, MOD_RIGHT_CTRL,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 4
-    0, 0, 0, 0, 0, 0, 0, MOD_RIGHT_GUI,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 5
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // Column 6
-    MOD_LEFT_GUI, 0, MOD_LEFT_SHIFT, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, MOD_LEFT_CTRL, 0,
-    // Column 7
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-};
+
+KeyboardV1::KeyboardV1() {
+    _keyTable = pgm_cast(default_key_table);
+    _modifierTable = pgm_cast(default_modifier_table);
+
+    // There are diodes installed on the left and right shift and control keys,
+    // as well as the control and alt thumb keys.
+    _diodes.set(getIndex(6, 2)); // Left shift
+    _diodes.set(getIndex(2, 7)); // Right shift
+    _diodes.set(getIndex(6, 14)); // Left ctrl
+    _diodes.set(getIndex(3, 7)); // Right ctrl
+    _diodes.set(getIndex(2, 4)); // Left thumb ctrl
+    _diodes.set(getIndex(2, 1)); // Right thumb ctrl
+    _diodes.set(getIndex(3, 12)); // Left thumb alt
+    _diodes.set(getIndex(2, 11)); // Right thumb alt
+}
 
 void
 KeyboardV1::prepare() {
@@ -179,49 +108,53 @@ KeyboardV1::prepare() {
     PORTB = 0xff;
     DDRC = 0x00;
     PORTC = 0xff;
-
-    init(16, 8,
-         pgm_cast(simpkins_key_table), pgm_cast(simpkins_modifier_table));
-    // TODO: This keyboard has diodes on most of the modifier keys.
-    // Update the _diodes map with the diode locations.
 }
 
 void
-KeyboardV1::scanImpl() {
-    for (uint8_t col = 0; col < 8; ++col) {
-        // Turn the specified column pin into an output pin, and bring it low.
-        //
-        // It is important that the other column pins are configured as inputs.
-        // If multiple keys are pressed down, they may create a circuit
-        // connecting to other column pins as well.  We don't want an output
-        // voltage on these pins to affect our reading on the column currently
-        // being scanned.
-        DDRF = 0x01 << col;
-        PORTF = 0xff & ~(0x01 << col);
+KeyboardV1::prepareColScan(uint8_t col) {
+    // Set the specified column to low output, with all other
+    // columns as pull-up input.
+    //
+    // We assume that all rows are already configured as pull-up inputs.
+    // (After each call to prepareRowScan(), finishRowScan() is always called
+    // before subsequent prepareColScan() calls.)
+    DDRF = 0x01 << col;
+    PORTF = 0xff & ~(0x01 << col);
+}
 
-        // We need a very brief delay here to allow the signal
-        // to propagate to the input pins.
-        _delay_us(5);
-
-        // Read which row pins are active
-        uint8_t b = ~PINB;
-        uint8_t c = ~PINC;
-
-        if (UNLIKELY(b)) {
-            for (uint8_t n = 0; n < 8; ++n) {
-                if (b & (0x1 << n)) {
-                    keyPressed(n, col);
-                }
-            }
-        }
-        if (UNLIKELY(c)) {
-            for (uint8_t n = 0; n < 8; ++n) {
-                if (c & (0x1 << n)) {
-                    keyPressed(n + 8, col);
-                }
-            }
-        }
-    }
+void
+KeyboardV1::prepareRowScan(uint8_t row) {
+    // Set the specified row to low output, with all other rows and columns
+    // as pull-up input.
     DDRF = 0x00;
     PORTF = 0xff;
+    if (row < 8) {
+        uint8_t bit = row;
+        DDRB = 0x01 << bit;
+        PORTB = 0xff & ~(0x01 << bit);
+    } else if (row < 16) {
+        uint8_t bit = row - 8;
+        DDRC = 0x01 << bit;
+        PORTC = 0xff & ~(0x01 << bit);
+    }
+}
+
+void
+KeyboardV1::finishRowScan() {
+    // Reset all rows to pull-up input.
+    DDRB = 0x00;
+    PORTB = 0xff;
+    DDRC = 0x00;
+    PORTC = 0xff;
+}
+
+void
+KeyboardV1::readRows(RowMap *rows) {
+    rows->bytes[0] = ~PINB;
+    rows->bytes[1] = ~PINC;
+}
+
+void
+KeyboardV1::readCols(ColMap *cols) {
+    cols->bytes[0] = ~PINF;
 }
