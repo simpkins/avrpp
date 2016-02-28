@@ -412,6 +412,35 @@ def emit_descriptor(outf, desc, name):
     outf.write('};\n')
 
 
+
+class AtomicFileWriter(object):
+    def __init__(self, path, tmp_prefix=None, encoding='utf-8'):
+        self.name = path
+        output_dir, base = os.path.split(path)
+        if tmp_prefix is None:
+            tmp_prefix = base + '.'
+
+        self.tmpf = NamedTemporaryFile(dir=output_dir, prefix=tmp_prefix,
+                                       mode='w', encoding=encoding,
+                                       delete=False)
+
+    def __enter__(self):
+        self.tmpf.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        tmp_name = self.tmpf.name
+        result = self.tmpf.__exit__(exc_type, exc_value, exc_traceback)
+        if result or exc_type is None:
+            os.rename(tmp_name, self.name)
+        else:
+            os.unlink(tmp_name)
+        return result
+
+    def write(self, data):
+        return self.tmpf.write(data)
+
+
 def main(gen_config):
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument('-h', '--header',
@@ -429,15 +458,7 @@ def main(gen_config):
 
     output_dir, output_name = os.path.split(args.output)
     tmp_prefix = '.' + output_name + '.tmp.'
-    with NamedTemporaryFile(dir=output_dir, prefix=tmp_prefix,
-                            mode='w', encoding='utf-8') as tmpf, \
-            NamedTemporaryFile(dir=output_dir, prefix=tmp_prefix,
-                               mode='w', encoding='utf-8') as tmph:
+    with AtomicFileWriter(args.output) as tmpf, \
+            AtomicFileWriter(args.header) as tmph:
         config.emit_header(tmph)
         config.emit(tmpf)
-
-        os.rename(tmpf.name, args.output)
-        tmpf.delete = False
-
-        os.rename(tmph.name, args.header)
-        tmph.delete = False
