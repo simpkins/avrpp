@@ -528,9 +528,9 @@ class ControlEndpoint(EndpointHandle):
         self.handle = handle
 
     def hid_set_feature(self, request, interface, report_id=0, timeout=0.1):
-        return self.hid_set_report(request=request, interface=interface,
-                                   report_type=hid.REPORT_TYPE_FEATURE,
-                                   report_id=report_id, timeout=timeout)
+        self.hid_set_report(request=request, interface=interface,
+                            report_type=hid.REPORT_TYPE_FEATURE,
+                            report_id=report_id, timeout=timeout)
 
     def hid_set_report(self, request, interface,
                        report_type=hid.REPORT_TYPE_OUTPUT,
@@ -551,6 +551,25 @@ class ControlEndpoint(EndpointHandle):
                            wIndex=interface,
                            timeout=timeout)
 
+    def hid_get_report(self, request, interface,
+                       report_type=hid.REPORT_TYPE_INPUT,
+                       report_id=0, timeout=0.1):
+        if isinstance(interface, InterfaceHandle):
+            interface = interface.idx
+        if (report_type & 0xff00) != report_type:
+            raise ValueError('Invalid report type %r' % (report_type,))
+        if not (0 <= report_id <= 0xff):
+            raise ValueError('Invalid report ID %r' % (report_id,))
+        request_type = (usb.ENDPOINT_IN | usb.REQUEST_TYPE_CLASS |
+                        usb.RECIPIENT_INTERFACE)
+        wValue = (report_type | report_id)
+        return self.setup_request(request=request,
+                                  bmRequestType=request_type,
+                                  bRequest=hid.SET_REPORT,
+                                  wValue=wValue,
+                                  wIndex=interface,
+                                  timeout=timeout)
+
     def setup_request(self, request, bmRequestType, bRequest, wValue, wIndex,
                       timeout=0.1):
         CONTROL_SETUP_SIZE = 8
@@ -562,8 +581,8 @@ class ControlEndpoint(EndpointHandle):
         for n in range(len(request)):
             buf[n + CONTROL_SETUP_SIZE] = request[n]
 
-        self._perform_transfer(buf, trans_type=TRANSFER_TYPE_CONTROL,
-                               timeout=timeout)
+        return self._perform_transfer(buf, trans_type=TRANSFER_TYPE_CONTROL,
+                                      timeout=timeout)
 
 
 class DeviceDescriptor(ctypes.Structure):
