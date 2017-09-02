@@ -13,5 +13,5 @@ env.AvrLibrary(
         'KbdDiodeImpl-defs.h',
         'Keyboard.h',
     ],
-    deps=['..:log', '..:util', '..:usb_dbg', '..:usb'],
+    deps=['..:log', '..:util', '..:usb_dbg', '..:usb', '..:usb_kbd'],
 )
