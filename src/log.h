@@ -165,6 +165,7 @@ DECLARE_PRINTER(uint32_t);
 DECLARE_PRINTER(int32_t);
 DECLARE_PRINTER(pgm_ptr<char>);
 DECLARE_PRINTER(NoParam);
+DECLARE_PRINTER(const char*);
 
 #else // !LOG_TYPE_SAFE
 

@@ -86,6 +86,15 @@ void LogPrinter<char>::print(char value, FormatFlags flags) {
     print_unsigned(value, flags);
 }
 
+void LogPrinter<const char*>::print(const char* value,
+                                    FormatFlags /* flags */) {
+    const char* p = value;
+    while (*p) {
+        putchar_safe(*p);
+        ++p;
+    }
+}
+
 void LogPrinter<uint8_t>::print(uint8_t value, FormatFlags flags) {
     if (flags & FLAG_CHAR) {
         putchar_safe(value);
