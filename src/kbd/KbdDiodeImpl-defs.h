@@ -10,13 +10,27 @@ KbdDiodeImpl<NC, NR, ImplT>::getState(uint8_t *modifiers,
                                       uint8_t *keys_len) const {
     *modifiers = 0;
 
-    FLOG(5, "getState():");
+    FLOG(6, "getState():");
     uint8_t pressed_idx = 0;
     for (uint8_t col = 0; col < NUM_COLS; ++col) {
         for (uint8_t row = 0; row < NUM_ROWS; ++row) {
             auto idx = getIndex(col, row);
-            if (_curMap->get(idx)) {
-                FLOG(5, " (%d,%d)=%d", col, row, _keyTable[idx]);
+            bool pressed = _curMap->get(idx);
+
+            // Log the key changes, if the log level is high enough.
+            if (f_log_level >= 5) {
+                bool prev = _prevMap->get(idx);
+                if (prev != pressed) {
+                    uint8_t key = _keyTable[idx];
+                    FLOG(5, "%s (%d, %d) %s\n",
+                         pressed ? "press" : "release",
+                         col, row,
+                         g_key_descriptions[key]);
+                }
+            }
+
+            if (pressed) {
+                FLOG(6, " (%d,%d)=%d", col, row, _keyTable[idx]);
                 if (pressed_idx < *keys_len) {
                     keys[pressed_idx] = _keyTable[idx];
                 }
@@ -26,7 +40,7 @@ KbdDiodeImpl<NC, NR, ImplT>::getState(uint8_t *modifiers,
             }
         }
     }
-    FLOG(5, " [%d pressed]\n", pressed_idx);
+    FLOG(6, " [%d keys pressed]\n", pressed_idx);
 
     *keys_len = pressed_idx;
 }

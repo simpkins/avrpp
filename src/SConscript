@@ -30,6 +30,7 @@ env.AvrLibrary(
     source=[
         'usb.cpp',
         'usb_descriptors.cpp',
+        'usb_hid_keyboard.cpp',
     ],
     headers=[
         'usb.h',

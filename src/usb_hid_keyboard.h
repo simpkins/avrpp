@@ -1,6 +1,8 @@
 // Copyright (c) 2013, Adam Simpkins
 #pragma once
 
+#include <stdint.h>
+
 /*
  * Keyboard code definitions:
  * http://www.usb.org/developers/devclass_docs/Hut1_11.pdf
@@ -143,6 +145,8 @@ enum KeyCodes : uint8_t {
     KEY_RIGHT_ALT = 230,
     KEY_RIGHT_GUI = 231,
 };
+
+extern const char* g_key_descriptions[];
 
 enum ModifierCodes : uint8_t {
     MOD_NONE = 0x00,
