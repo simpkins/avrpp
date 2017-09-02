@@ -40,7 +40,7 @@ extern uint8_t g_log_level;
  * during refactoring.)
  */
 #define F_LOG_LEVEL(level) \
-    static uint8_t f_log_level __attribute__((unused)) = (level);
+    static constexpr uint8_t f_log_level __attribute__((unused)) = (level);
 
 typedef bool (*LogPutcharFn)(uint8_t c, void* arg);
 
