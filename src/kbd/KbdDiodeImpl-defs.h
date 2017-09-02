@@ -95,6 +95,28 @@ KbdDiodeImpl<NC, NR, ImplT>::scanKeys() {
     return (*_curMap != *_prevMap);
 }
 
+// Whether to perform a more complicated ghosting resolution scheme,
+// or a simple one that just does simple blocking.
+//
+// The complex scheme tries doing a reverse scan (signal rows, read columns)
+// to see if we can detect which keys are really down.  Unfortunately it
+// suffers from timing problems--it can produce incorrect results if the keys
+// have changed between the original scan and its reverse scan.  Therefore we
+// have it disabled for now.
+//
+// There are still some issues that are not avoided by either scheme:
+// In some cases a key can be pressed halfway through a the scan, after we have
+// already scanned that key and seen it not down.  However, ghosting can cause
+// another key that hasn't been scanned yet to appear down, and we don't detect
+// this as a full rectangle being down.
+//
+// We probably need some sort of debounce or delay scheme for this.  For
+// instance, we could wait until a key has been down for 2 scan cycles to
+// report it.  This should avoid the incorrect key being reported in the first
+// cycle.
+#define COMPLEX_GHOSTING_RESOLUTION 0
+
+#if COMPLEX_GHOSTING_RESOLUTION
 template<uint8_t NC, uint8_t NR, typename ImplT>
 void
 KbdDiodeImpl<NC, NR, ImplT>::resolveGhosting() {
@@ -199,6 +221,51 @@ KbdDiodeImpl<NC, NR, ImplT>::resolveGhosting() {
         }
     }
 }
+#else
+template<uint8_t NC, uint8_t NR, typename ImplT>
+void
+KbdDiodeImpl<NC, NR, ImplT>::resolveGhosting() {
+    // Walk through the keys, and look for rectangles where all 4 corners
+    // are pressed.  In these cases, 1 corner might not really be pressed,
+    // but was simply detected due to ghosting.
+    //
+    // This process is O(N^2) in the worst case (where N is the total number of
+    // keys).  However, in the common case where very few keys are pressed it
+    // is close to O(N).  (It is O(N + K*N), where K is the number of keys
+    // pressed.)
+
+    for (uint8_t col_a = 0; col_a < NUM_COLS; ++col_a) {
+        for (uint8_t row_a = 0; row_a < NUM_ROWS; ++row_a) {
+            auto idx_aa = getIndex(col_a, row_a);
+            if (!_curMap->get(idx_aa)) {
+                continue;
+            }
+
+            // Look for another row_a down on this column
+            for (uint8_t row_b = row_a + 1; row_b < NUM_ROWS; ++row_b) {
+                auto idx_ab = getIndex(col_a, row_b);
+                if (!_curMap->get(idx_ab)) {
+                    continue;
+                }
+
+                // aa and ab are both down.
+                // Look for another column with both ba and bb down
+                for (uint8_t col_b = col_a + 1; col_b < NUM_COLS; ++col_b) {
+                    auto idx_ba = getIndex(col_b, row_a);
+                    auto idx_bb = getIndex(col_b, row_b);
+                    if (_curMap->get(idx_ba) && _curMap->get(idx_bb)) {
+                        // Found a rectangle
+                        FLOG(4, "Found rectangle (%d, %d) x (%d, %d)\n",
+                             col_a, row_a, col_b, row_b);
+
+                        performBlocking(col_a, col_b, row_a, row_b);
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
 
 template<uint8_t NC, uint8_t NR, typename ImplT>
 void
